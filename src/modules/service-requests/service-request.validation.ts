@@ -40,6 +40,7 @@ export const updateStatusSchema = z
       RequestStatus.COMPLETED,
       RequestStatus.CANCELLED,
     ]),
+    laborCost: z.number().min(0, 'Labor cost cannot be negative').optional().default(0),
   })
   .strict();
 

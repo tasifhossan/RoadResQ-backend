@@ -1,6 +1,7 @@
 import { RequestStatus, Availability } from '@prisma/client';
 import { prisma } from '../../config/db.js';
 import { CreateServiceRequestInput } from './service-request.validation.js';
+import { generateInvoice } from '../invoices/invoice.service.js';
 
 export interface NearbyMechanic {
   id: string;
@@ -277,12 +278,13 @@ export const acceptAssignment = async (
 
 /**
  * Updates the service request status following strict state machine rules.
- * Handles mechanic availability, totalJobs increments, and AuditLog recording atomically.
+ * Handles mechanic availability, totalJobs increments, invoice generation, and AuditLog recording atomically.
  */
 export const updateStatus = async (
   serviceRequestId: string,
   mechanicUserId: string,
-  newStatus: RequestStatus
+  newStatus: RequestStatus,
+  laborCost: number = 0
 ) => {
   return await prisma.$transaction(async (tx) => {
     // Row-level lock on ServiceRequest
@@ -327,7 +329,7 @@ export const updateStatus = async (
       data: { status: newStatus },
     });
 
-    // Handle side-effects on mechanic profile availability and job stats
+    // Handle side-effects on mechanic profile availability, job stats, and invoice generation
     if (newStatus === RequestStatus.COMPLETED) {
       await tx.mechanicProfile.update({
         where: { userId: mechanicUserId },
@@ -336,6 +338,9 @@ export const updateStatus = async (
           totalJobs: { increment: 1 },
         },
       });
+
+      // Automatically generate invoice upon job completion
+      await generateInvoice(serviceRequestId, laborCost, tx);
     } else if (
       newStatus === RequestStatus.CANCELLED &&
       ([RequestStatus.EN_ROUTE, RequestStatus.ARRIVED, RequestStatus.IN_PROGRESS] as RequestStatus[]).includes(

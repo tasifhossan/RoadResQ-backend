@@ -169,7 +169,8 @@ const updateStatus = async (
     const serviceRequest = await updateStatusService(
       serviceRequestId,
       mechanicUserId,
-      parsed.data.status
+      parsed.data.status,
+      parsed.data.laborCost
     );
 
     sendResponse(res, {
