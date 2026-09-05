@@ -166,7 +166,7 @@ const updateStatus = async (
       return;
     }
 
-    const serviceRequest = await updateStatusService(
+    const result = await updateStatusService(
       serviceRequestId,
       mechanicUserId,
       parsed.data.status,
@@ -177,7 +177,7 @@ const updateStatus = async (
       statusCode: 200,
       success: true,
       message: `Service request status updated to ${parsed.data.status}`,
-      data: { serviceRequest },
+      data: result,
     });
   } catch (error) {
     next(error);

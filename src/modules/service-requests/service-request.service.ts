@@ -330,6 +330,7 @@ export const updateStatus = async (
     });
 
     // Handle side-effects on mechanic profile availability, job stats, and invoice generation
+    let invoice;
     if (newStatus === RequestStatus.COMPLETED) {
       await tx.mechanicProfile.update({
         where: { userId: mechanicUserId },
@@ -340,7 +341,7 @@ export const updateStatus = async (
       });
 
       // Automatically generate invoice upon job completion
-      await generateInvoice(serviceRequestId, laborCost, tx);
+      invoice = await generateInvoice(serviceRequestId, laborCost, tx);
     } else if (
       newStatus === RequestStatus.CANCELLED &&
       ([RequestStatus.EN_ROUTE, RequestStatus.ARRIVED, RequestStatus.IN_PROGRESS] as RequestStatus[]).includes(
@@ -369,7 +370,10 @@ export const updateStatus = async (
       },
     });
 
-    return updatedRequest;
+    return {
+      serviceRequest: updatedRequest,
+      ...(invoice ? { invoice } : {}),
+    };
   });
 };
 
