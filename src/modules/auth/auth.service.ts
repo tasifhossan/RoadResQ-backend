@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Role } from '@prisma/client';
 import { prisma } from '../../config/db.js';
 import { comparePassword, hashPassword } from '../../utils/hashPassword.js';
@@ -7,6 +8,13 @@ import {
   verifyRefreshToken,
 } from '../../utils/jwt.js';
 import { LoginInput, RegisterInput } from './auth.validation.js';
+
+/**
+ * Hashes a raw JWT refresh token using SHA-256 for secure database storage.
+ */
+export const hashToken = (token: string): string => {
+  return crypto.createHash('sha256').update(token).digest('hex');
+};
 
 /**
  * Registers a new user (CUSTOMER or MECHANIC).
@@ -62,7 +70,7 @@ export const registerUser = async (data: RegisterInput) => {
 
 /**
  * Authenticates a user with email and password.
- * Generates and persists refresh token in DB for server-side validation/logout.
+ * Generates raw refresh token for client and stores SHA-256 hash in DB.
  */
 export const loginUser = async (data: LoginInput) => {
   const user = await prisma.user.findFirst({
@@ -95,14 +103,15 @@ export const loginUser = async (data: LoginInput) => {
 
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
+  const hashedRefreshToken = hashToken(refreshToken);
 
-  // Store refresh token in database (expires in 7 days)
+  // Store SHA-256 hash of refresh token in database (expires in 7 days)
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
 
   await prisma.refreshToken.create({
     data: {
-      token: refreshToken,
+      token: hashedRefreshToken,
       userId: user.id,
       expiresAt,
     },
@@ -119,8 +128,8 @@ export const loginUser = async (data: LoginInput) => {
 };
 
 /**
- * Rotates a refresh token: validates the existing token against signature & DB,
- * revokes the old refresh token, and issues a new access token + new refresh token.
+ * Rotates a refresh token: hashes incoming token, validates against DB hash & signature,
+ * revokes the old token hash, and issues a new access token + new refresh token pair.
  */
 export const refreshAccessToken = async (tokenStr: string) => {
   let decoded;
@@ -132,12 +141,22 @@ export const refreshAccessToken = async (tokenStr: string) => {
     throw err;
   }
 
-  // Check if token exists in database (handles server-side revocation / logout)
+  const hashedToken = hashToken(tokenStr);
+
+  // Look up by SHA-256 token hash
   const storedToken = await prisma.refreshToken.findUnique({
-    where: { token: tokenStr },
+    where: { token: hashedToken },
   });
 
   if (!storedToken) {
+    const err = new Error('Invalid or revoked refresh token') as Error & { statusCode: number };
+    err.statusCode = 401;
+    throw err;
+  }
+
+  // Ensure stored token belongs to user in token payload
+  if (storedToken.userId !== decoded.id) {
+    await prisma.refreshToken.delete({ where: { id: storedToken.id } });
     const err = new Error('Invalid or revoked refresh token') as Error & { statusCode: number };
     err.statusCode = 401;
     throw err;
@@ -166,7 +185,7 @@ export const refreshAccessToken = async (tokenStr: string) => {
     throw err;
   }
 
-  // REFRESH TOKEN ROTATION: Revoke old token and issue new pair
+  // REFRESH TOKEN ROTATION: Revoke old token hash and issue new pair
   await prisma.refreshToken.delete({ where: { id: storedToken.id } });
 
   const payload = {
@@ -177,13 +196,14 @@ export const refreshAccessToken = async (tokenStr: string) => {
 
   const newAccessToken = generateAccessToken(payload);
   const newRefreshToken = generateRefreshToken(payload);
+  const newHashedRefreshToken = hashToken(newRefreshToken);
 
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
 
   await prisma.refreshToken.create({
     data: {
-      token: newRefreshToken,
+      token: newHashedRefreshToken,
       userId: user.id,
       expiresAt,
     },
@@ -196,13 +216,14 @@ export const refreshAccessToken = async (tokenStr: string) => {
 };
 
 /**
- * Revokes refresh token(s) server-side upon user logout.
+ * Revokes refresh token hash(es) server-side upon user logout.
  */
 export const logoutUser = async (userId: string, tokenStr?: string) => {
   if (tokenStr) {
+    const hashedToken = hashToken(tokenStr);
     await prisma.refreshToken.deleteMany({
       where: {
-        token: tokenStr,
+        token: hashedToken,
         userId,
       },
     });
