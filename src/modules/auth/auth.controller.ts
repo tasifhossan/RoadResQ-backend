@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { loginSchema, registerSchema } from './auth.validation.js';
 import { loginUser, registerUser } from './auth.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
+import { formatZodError } from '../../utils/formatZodError.js';
 
 const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -13,10 +14,7 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
         statusCode: 400,
         success: false,
         message: 'Validation failed',
-        errors: parsed.error.issues.map((issue) => ({
-          field: issue.path.join('.'),
-          message: issue.message,
-        })),
+        errors: formatZodError(parsed.error),
       });
       return;
     }
@@ -43,10 +41,7 @@ const login = async (req: Request, res: Response, next: NextFunction): Promise<v
         statusCode: 400,
         success: false,
         message: 'Validation failed',
-        errors: parsed.error.issues.map((issue) => ({
-          field: issue.path.join('.'),
-          message: issue.message,
-        })),
+        errors: formatZodError(parsed.error),
       });
       return;
     }

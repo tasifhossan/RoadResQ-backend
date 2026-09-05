@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { updateUserSchema } from './user.validation.js';
 import { getMe, updateMe } from './user.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
+import { formatZodError } from '../../utils/formatZodError.js';
 
 const getMeHandler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -30,10 +31,7 @@ const updateMeHandler = async (req: Request, res: Response, next: NextFunction):
         statusCode: 400,
         success: false,
         message: 'Validation failed',
-        errors: parsed.error.issues.map((issue) => ({
-          field: issue.path.join('.'),
-          message: issue.message,
-        })),
+        errors: formatZodError(parsed.error),
       });
       return;
     }
