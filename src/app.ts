@@ -24,6 +24,18 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Welcome route
+app.get('/', (_req: Request, res: Response) => {
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Welcome to RoadResQ REST API',
+    data: {
+      healthCheck: '/api/v1/health',
+    },
+  });
+});
+
 // Health check endpoint
 app.get('/api/v1/health', (_req: Request, res: Response) => {
   sendResponse(res, {
