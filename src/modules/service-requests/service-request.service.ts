@@ -413,37 +413,53 @@ export const addPartsUsed = async (
       throw err;
     }
 
-    // Step 1: Pre-verify all spare parts exist and have sufficient stock
+    const mechanicProfile = await tx.mechanicProfile.findUnique({
+      where: { userId: mechanicUserId },
+    });
+
+    if (!mechanicProfile) {
+      const err = new Error('Mechanic profile not found') as Error & { statusCode: number };
+      err.statusCode = 404;
+      throw err;
+    }
+
+    // Step 1: Pre-verify all spare parts exist in this mechanic's inventory and have sufficient stock
     const sparePartsToProcess = [];
     for (const item of parts) {
-      const sparePart = await tx.sparePart.findFirst({
-        where: { id: item.sparePartId, deletedAt: null },
+      const inventoryItem = await tx.mechanicInventory.findUnique({
+        where: {
+          mechanicProfileId_sparePartId: {
+            mechanicProfileId: mechanicProfile.id,
+            sparePartId: item.sparePartId,
+          },
+        },
+        include: { sparePart: true },
       });
 
-      if (!sparePart) {
-        const err = new Error(`Spare part not found: ${item.sparePartId}`) as Error & {
-          statusCode: number;
-        };
-        err.statusCode = 404;
-        throw err;
-      }
-
-      if (sparePart.stock < item.quantity) {
+      if (!inventoryItem || inventoryItem.sparePart.deletedAt !== null) {
         const err = new Error(
-          `Insufficient stock for spare part '${sparePart.name}'. Requested: ${item.quantity}, Available: ${sparePart.stock}`
+          `Spare part is not in your inventory: ${item.sparePartId}`
         ) as Error & { statusCode: number };
         err.statusCode = 400;
         throw err;
       }
 
-      sparePartsToProcess.push({ sparePart, quantity: item.quantity });
+      if (inventoryItem.stock < item.quantity) {
+        const err = new Error(
+          `Insufficient stock for spare part '${inventoryItem.sparePart.name}'. Requested: ${item.quantity}, Available: ${inventoryItem.stock}`
+        ) as Error & { statusCode: number };
+        err.statusCode = 400;
+        throw err;
+      }
+
+      sparePartsToProcess.push({ inventoryItem, quantity: item.quantity });
     }
 
-    // Step 2: Decrement stock and create ServiceRequestPart records with priceAtUse snapshot
+    // Step 2: Decrement mechanic inventory stock and create ServiceRequestPart records with priceAtUse snapshot
     const createdParts = [];
     for (const item of sparePartsToProcess) {
-      await tx.sparePart.update({
-        where: { id: item.sparePart.id },
+      await tx.mechanicInventory.update({
+        where: { id: item.inventoryItem.id },
         data: {
           stock: { decrement: item.quantity },
         },
@@ -452,9 +468,9 @@ export const addPartsUsed = async (
       const requestPart = await tx.serviceRequestPart.create({
         data: {
           serviceRequestId,
-          sparePartId: item.sparePart.id,
+          sparePartId: item.inventoryItem.sparePartId,
           quantity: item.quantity,
-          priceAtUse: item.sparePart.price,
+          priceAtUse: item.inventoryItem.price,
         },
       });
 
