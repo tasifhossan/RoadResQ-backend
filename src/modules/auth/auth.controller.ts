@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { loginSchema, registerSchema } from './auth.validation.js';
-import { loginUser, registerUser } from './auth.service.js';
+import { loginSchema, registerSchema, refreshTokenSchema } from './auth.validation.js';
+import { loginUser, registerUser, refreshAccessToken, logoutUser } from './auth.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
 
@@ -59,5 +59,63 @@ const login = async (req: Request, res: Response, next: NextFunction): Promise<v
   }
 };
 
-export const AuthController = { register, login };
+const refreshTokenHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const parsed = refreshTokenSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsed.error),
+      });
+      return;
+    }
+
+    const result = await refreshAccessToken(parsed.data.refreshToken);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Access token refreshed successfully',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const logoutHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const refreshToken =
+      typeof req.body?.refreshToken === 'string' ? req.body.refreshToken : undefined;
+
+    await logoutUser(userId, refreshToken);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Logout successful',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const AuthController = {
+  register,
+  login,
+  refreshToken: refreshTokenHandler,
+  logout: logoutHandler,
+};
 

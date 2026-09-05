@@ -72,6 +72,7 @@ model User {
   mechanicRequests ServiceRequest[]  @relation("MechanicRequests")
   reviews           Review[]
   auditLogs         AuditLog[]
+  refreshTokens     RefreshToken[]
 
   @@index([email])
 }
@@ -221,4 +222,16 @@ model AuditLog {
 
   @@index([actorId])
   @@index([entityType, entityId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
 }
