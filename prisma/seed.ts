@@ -23,7 +23,7 @@ async function main() {
     data: {
       name: 'System Admin',
       email: 'admin@roadresq.com',
-      password: '$2b$10$hashedpasswordplaceholderforadmin',
+      password: '$2b$10$Ybim.CnoG5DxGINahr/M4etewVAjuxQCXHuFnTW62imtBOpPcRMPy',
       role: Role.ADMIN,
       phone: '+18005550199',
     },
