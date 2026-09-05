@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { registerSchema } from './auth.validation.js';
-import { registerUser } from './auth.service.js';
+import { loginSchema, registerSchema } from './auth.validation.js';
+import { loginUser, registerUser } from './auth.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 
 const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -34,4 +34,35 @@ const register = async (req: Request, res: Response, next: NextFunction): Promis
   }
 };
 
-export const AuthController = { register };
+const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const parsed = loginSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: parsed.error.issues.map((issue) => ({
+          field: issue.path.join('.'),
+          message: issue.message,
+        })),
+      });
+      return;
+    }
+
+    const result = await loginUser(parsed.data);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Login successful',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const AuthController = { register, login };
+

@@ -1,7 +1,8 @@
 import { Role } from '@prisma/client';
 import { prisma } from '../../config/db.js';
-import { hashPassword } from '../../utils/hashPassword.js';
-import { RegisterInput } from './auth.validation.js';
+import { comparePassword, hashPassword } from '../../utils/hashPassword.js';
+import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.js';
+import { LoginInput, RegisterInput } from './auth.validation.js';
 
 /**
  * Registers a new user (CUSTOMER or MECHANIC).
@@ -65,3 +66,52 @@ export const registerUser = async (data: RegisterInput) => {
 
   return user;
 };
+
+/**
+ * Authenticates a user with email and password.
+ * Excludes soft-deleted users (deletedAt != null).
+ * Returns generic "Invalid credentials" error for both missing user and wrong password.
+ */
+export const loginUser = async (data: LoginInput) => {
+  const user = await prisma.user.findFirst({
+    where: {
+      email: data.email,
+      deletedAt: null,
+    },
+  });
+
+  const invalidCredsError = () => {
+    const err = new Error('Invalid credentials') as Error & { statusCode: number };
+    err.statusCode = 401;
+    return err;
+  };
+
+  if (!user) {
+    throw invalidCredsError();
+  }
+
+  const isPasswordValid = await comparePassword(data.password, user.password);
+  if (!isPasswordValid) {
+    throw invalidCredsError();
+  }
+
+  const payload = {
+    id: user.id,
+    role: user.role,
+    email: user.email,
+  };
+
+  const accessToken = generateAccessToken(payload);
+  const refreshToken = generateRefreshToken(payload);
+
+  // Return user stripping password
+  const userObj = { ...user };
+  delete (userObj as { password?: string }).password;
+
+  return {
+    user: userObj,
+    accessToken,
+    refreshToken,
+  };
+};
+
