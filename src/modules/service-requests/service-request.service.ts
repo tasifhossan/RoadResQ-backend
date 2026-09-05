@@ -1,4 +1,4 @@
-import { RequestStatus } from '@prisma/client';
+import { RequestStatus, Availability } from '@prisma/client';
 import { prisma } from '../../config/db.js';
 import { CreateServiceRequestInput } from './service-request.validation.js';
 
@@ -100,7 +100,226 @@ export const findNearbyMechanics = async (
   }));
 };
 
+/**
+ * Assigns a specific mechanic to a PENDING service request in a transaction-safe manner.
+ * Uses pessimistic row locking (FOR UPDATE) to prevent race conditions.
+ */
+export const assignMechanic = async (
+  serviceRequestId: string,
+  customerId: string,
+  targetMechanicId: string
+) => {
+  return await prisma.$transaction(async (tx) => {
+    // Row-level lock on ServiceRequest to prevent race conditions
+    const requests = await tx.$queryRaw<
+      Array<{ id: string; status: string; customerId: string }>
+    >`
+      SELECT "id", "status"::text AS "status", "customerId"
+      FROM "ServiceRequest"
+      WHERE "id" = ${serviceRequestId}
+      FOR UPDATE
+    `;
+
+    const request = requests[0];
+    if (!request || request.customerId !== customerId) {
+      const err = new Error('Service request not found') as Error & { statusCode: number };
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (request.status !== RequestStatus.PENDING) {
+      const err = new Error('Service request is no longer pending assignment') as Error & {
+        statusCode: number;
+      };
+      err.statusCode = 409;
+      throw err;
+    }
+
+    // Target mechanic can be specified by MechanicProfile ID or User ID
+    const mechanicProfile = await tx.mechanicProfile.findFirst({
+      where: {
+        OR: [{ id: targetMechanicId }, { userId: targetMechanicId }],
+      },
+      include: { user: true },
+    });
+
+    if (!mechanicProfile || mechanicProfile.user.role !== 'MECHANIC') {
+      const err = new Error('Mechanic not found') as Error & { statusCode: number };
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (mechanicProfile.availability !== Availability.AVAILABLE) {
+      const err = new Error('Selected mechanic is not currently available') as Error & {
+        statusCode: number;
+      };
+      err.statusCode = 409;
+      throw err;
+    }
+
+    const updatedRequest = await tx.serviceRequest.update({
+      where: { id: serviceRequestId },
+      data: {
+        mechanicId: mechanicProfile.userId,
+        status: RequestStatus.ASSIGNED,
+      },
+    });
+
+    return updatedRequest;
+  });
+};
+
+/**
+ * Allows the assigned mechanic to accept a service request.
+ * Sets request status to EN_ROUTE and mechanic profile availability to BUSY atomically.
+ */
+export const acceptAssignment = async (
+  serviceRequestId: string,
+  mechanicUserId: string
+) => {
+  return await prisma.$transaction(async (tx) => {
+    // Row-level lock on ServiceRequest to prevent double-acceptance or race conditions
+    const requests = await tx.$queryRaw<
+      Array<{ id: string; status: string; mechanicId: string | null }>
+    >`
+      SELECT "id", "status"::text AS "status", "mechanicId"
+      FROM "ServiceRequest"
+      WHERE "id" = ${serviceRequestId}
+      FOR UPDATE
+    `;
+
+    const request = requests[0];
+    if (!request) {
+      const err = new Error('Service request not found') as Error & { statusCode: number };
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (request.mechanicId !== mechanicUserId) {
+      const err = new Error('You are not assigned to this service request') as Error & {
+        statusCode: number;
+      };
+      err.statusCode = 409;
+      throw err;
+    }
+
+    if (request.status !== RequestStatus.ASSIGNED) {
+      const err = new Error(
+        `Service request cannot be accepted in current status (${request.status})`
+      ) as Error & { statusCode: number };
+      err.statusCode = 409;
+      throw err;
+    }
+
+    // Update ServiceRequest status to EN_ROUTE
+    const updatedRequest = await tx.serviceRequest.update({
+      where: { id: serviceRequestId },
+      data: {
+        status: RequestStatus.EN_ROUTE,
+      },
+    });
+
+    // Update MechanicProfile availability to BUSY
+    await tx.mechanicProfile.update({
+      where: { userId: mechanicUserId },
+      data: {
+        availability: Availability.BUSY,
+      },
+    });
+
+    return updatedRequest;
+  });
+};
+
+/**
+ * Retrieves paginated service requests created by the specified customer.
+ */
+export const getMyServiceRequests = async (
+  customerId: string,
+  page: number = 1,
+  limit: number = 10
+) => {
+  const skip = (page - 1) * limit;
+
+  const [total, serviceRequests] = await Promise.all([
+    prisma.serviceRequest.count({ where: { customerId } }),
+    prisma.serviceRequest.findMany({
+      where: { customerId },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+      include: {
+        vehicle: true,
+        mechanic: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    serviceRequests,
+  };
+};
+
+/**
+ * Retrieves paginated service requests assigned to the specified mechanic.
+ */
+export const getAssignedServiceRequests = async (
+  mechanicUserId: string,
+  page: number = 1,
+  limit: number = 10
+) => {
+  const skip = (page - 1) * limit;
+
+  const [total, serviceRequests] = await Promise.all([
+    prisma.serviceRequest.count({ where: { mechanicId: mechanicUserId } }),
+    prisma.serviceRequest.findMany({
+      where: { mechanicId: mechanicUserId },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+        vehicle: true,
+      },
+    }),
+  ]);
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    serviceRequests,
+  };
+};
+
 export const ServiceRequestService = {
   createServiceRequest,
   findNearbyMechanics,
+  assignMechanic,
+  acceptAssignment,
+  getMyServiceRequests,
+  getAssignedServiceRequests,
 };

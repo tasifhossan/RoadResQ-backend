@@ -19,5 +19,20 @@ export const nearbyMechanicsQuerySchema = z
   })
   .strict();
 
+export const assignMechanicSchema = z
+  .object({
+    mechanicId: z.string().min(1, 'Mechanic ID is required'),
+  })
+  .strict();
+
+export const paginationQuerySchema = z
+  .object({
+    page: z.coerce.number().min(1).optional().default(1),
+    limit: z.coerce.number().min(1).max(100).optional().default(10),
+  })
+  .strict();
+
 export type CreateServiceRequestInput = z.infer<typeof createServiceRequestSchema>;
 export type NearbyMechanicsQueryInput = z.infer<typeof nearbyMechanicsQuerySchema>;
+export type AssignMechanicInput = z.infer<typeof assignMechanicSchema>;
+export type PaginationQueryInput = z.infer<typeof paginationQuerySchema>;

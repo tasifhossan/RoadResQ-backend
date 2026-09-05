@@ -2,10 +2,16 @@ import { Request, Response, NextFunction } from 'express';
 import {
   createServiceRequestSchema,
   nearbyMechanicsQuerySchema,
+  assignMechanicSchema,
+  paginationQuerySchema,
 } from './service-request.validation.js';
 import {
   createServiceRequest as createServiceRequestService,
   findNearbyMechanics as findNearbyMechanicsService,
+  assignMechanic as assignMechanicService,
+  acceptAssignment as acceptAssignmentService,
+  getMyServiceRequests as getMyServiceRequestsService,
+  getAssignedServiceRequests as getAssignedServiceRequestsService,
 } from './service-request.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
@@ -77,7 +83,148 @@ const getNearbyMechanics = async (
   }
 };
 
+const assignMechanic = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const customerId = req.user!.id;
+    const serviceRequestId = req.params.id;
+    const parsed = assignMechanicSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsed.error),
+      });
+      return;
+    }
+
+    const serviceRequest = await assignMechanicService(
+      serviceRequestId,
+      customerId,
+      parsed.data.mechanicId
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Mechanic assigned successfully',
+      data: { serviceRequest },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const acceptAssignment = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const mechanicUserId = req.user!.id;
+    const serviceRequestId = req.params.id;
+
+    const serviceRequest = await acceptAssignmentService(serviceRequestId, mechanicUserId);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Assignment accepted successfully',
+      data: { serviceRequest },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getMyServiceRequests = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const customerId = req.user!.id;
+    const parsed = paginationQuerySchema.safeParse(req.query);
+
+    if (!parsed.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsed.error),
+      });
+      return;
+    }
+
+    const result = await getMyServiceRequestsService(
+      customerId,
+      parsed.data.page,
+      parsed.data.limit
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Customer service requests retrieved successfully',
+      data: {
+        meta: result.meta,
+        serviceRequests: result.serviceRequests,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAssignedServiceRequests = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const mechanicUserId = req.user!.id;
+    const parsed = paginationQuerySchema.safeParse(req.query);
+
+    if (!parsed.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsed.error),
+      });
+      return;
+    }
+
+    const result = await getAssignedServiceRequestsService(
+      mechanicUserId,
+      parsed.data.page,
+      parsed.data.limit
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Assigned service requests retrieved successfully',
+      data: {
+        meta: result.meta,
+        serviceRequests: result.serviceRequests,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const ServiceRequestController = {
   createServiceRequest,
   getNearbyMechanics,
+  assignMechanic,
+  acceptAssignment,
+  getMyServiceRequests,
+  getAssignedServiceRequests,
 };
