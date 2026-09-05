@@ -157,6 +157,29 @@ export const assignMechanic = async (
       throw err;
     }
 
+    // Check if mechanic already has a pending invitation (ASSIGNED) or active assignment
+    const existingActiveRequest = await tx.serviceRequest.findFirst({
+      where: {
+        mechanicId: mechanicProfile.userId,
+        status: {
+          in: [
+            RequestStatus.ASSIGNED,
+            RequestStatus.EN_ROUTE,
+            RequestStatus.ARRIVED,
+            RequestStatus.IN_PROGRESS,
+          ],
+        },
+      },
+    });
+
+    if (existingActiveRequest) {
+      const err = new Error(
+        'Mechanic already has a pending invitation or active assignment'
+      ) as Error & { statusCode: number };
+      err.statusCode = 409;
+      throw err;
+    }
+
     const updatedRequest = await tx.serviceRequest.update({
       where: { id: serviceRequestId },
       data: {
@@ -206,6 +229,19 @@ export const acceptAssignment = async (
     if (request.status !== RequestStatus.ASSIGNED) {
       const err = new Error(
         `Service request cannot be accepted in current status (${request.status})`
+      ) as Error & { statusCode: number };
+      err.statusCode = 409;
+      throw err;
+    }
+
+    // Re-verify mechanic availability inside transaction before accepting
+    const mechanicProfile = await tx.mechanicProfile.findUnique({
+      where: { userId: mechanicUserId },
+    });
+
+    if (!mechanicProfile || mechanicProfile.availability !== Availability.AVAILABLE) {
+      const err = new Error(
+        'Mechanic is no longer available or is currently busy on another job'
       ) as Error & { statusCode: number };
       err.statusCode = 409;
       throw err;
