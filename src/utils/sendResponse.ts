@@ -4,7 +4,7 @@ export interface IApiResponse<T> {
   success: boolean;
   message: string;
   data?: T;
-  errors?: any[];
+  errors?: unknown[];
 }
 
 export const sendResponse = <T>(
@@ -14,7 +14,7 @@ export const sendResponse = <T>(
     success: boolean;
     message: string;
     data?: T;
-    errors?: any[];
+    errors?: unknown[];
   }
 ): void => {
   const responseBody: IApiResponse<T> = {
