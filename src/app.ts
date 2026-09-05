@@ -9,6 +9,7 @@ import { authRoutes } from './modules/auth/auth.route.js';
 import { userRoutes } from './modules/users/user.route.js';
 import { vehicleRoutes } from './modules/vehicles/vehicle.route.js';
 import { mechanicRoutes } from './modules/mechanics/mechanic.route.js';
+import { mechanicInventoryRoutes } from './modules/mechanic-inventory/mechanic-inventory.route.js';
 import { serviceRequestRoutes } from './modules/service-requests/service-request.route.js';
 import { sparePartRoutes } from './modules/spare-parts/spare-part.route.js';
 import { invoiceRoutes } from './modules/invoices/invoice.route.js';
@@ -53,6 +54,7 @@ app.get('/api/v1/health', (_req: Request, res: Response) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/vehicles', vehicleRoutes);
+app.use('/api/v1/mechanics/me/inventory', mechanicInventoryRoutes);
 app.use('/api/v1/mechanics', mechanicRoutes);
 app.use('/api/v1/service-requests', serviceRequestRoutes);
 app.use('/api/v1/spare-parts', sparePartRoutes);

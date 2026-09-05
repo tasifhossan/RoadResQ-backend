@@ -27,7 +27,7 @@ const createSparePart = async (
     sendResponse(res, {
       statusCode: 201,
       success: true,
-      message: 'Spare part created successfully',
+      message: 'Catalog spare part created successfully',
       data: { sparePart },
     });
   } catch (error) {
@@ -52,7 +52,7 @@ const getAllSpareParts = async (
     sendResponse(res, {
       statusCode: 200,
       success: true,
-      message: 'Spare parts retrieved successfully',
+      message: 'Catalog spare parts retrieved successfully',
       data: result,
     });
   } catch (error) {
@@ -105,7 +105,7 @@ const updateSparePart = async (
     sendResponse(res, {
       statusCode: 200,
       success: true,
-      message: 'Spare part updated successfully',
+      message: 'Catalog spare part updated successfully',
       data: { sparePart },
     });
   } catch (error) {
@@ -124,44 +124,7 @@ const softDeleteSparePart = async (
     sendResponse(res, {
       statusCode: 200,
       success: true,
-      message: 'Spare part soft deleted successfully',
-      data: { sparePart },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const restockSparePart = async (
-  req: Request<{ id: string }>,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const parsedBody = SparePartValidation.restockSparePartSchema.safeParse(req.body);
-
-    if (!parsedBody.success) {
-      sendResponse(res, {
-        statusCode: 400,
-        success: false,
-        message: 'Validation failed',
-        errors: formatZodError(parsedBody.error),
-      });
-      return;
-    }
-
-    const mechanicUserId = req.user!.id;
-
-    const sparePart = await SparePartService.restockSparePart(
-      req.params.id,
-      parsedBody.data.quantity,
-      mechanicUserId
-    );
-
-    sendResponse(res, {
-      statusCode: 200,
-      success: true,
-      message: 'Spare part restocked successfully',
+      message: 'Catalog spare part soft deleted successfully',
       data: { sparePart },
     });
   } catch (error) {
@@ -175,5 +138,4 @@ export const SparePartController = {
   getSparePartById,
   updateSparePart,
   softDeleteSparePart,
-  restockSparePart,
 };

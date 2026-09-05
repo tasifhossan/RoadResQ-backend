@@ -73,6 +73,7 @@ model User {
   reviews           Review[]
   auditLogs         AuditLog[]
   refreshTokens     RefreshToken[]
+  createdSpareParts SparePart[]       @relation("CreatedSpareParts")
 
   @@index([email])
 }
@@ -89,6 +90,7 @@ model MechanicProfile {
   totalJobs    Int             @default(0)
 
   locationUpdates LocationUpdate[]
+  inventory       MechanicInventory[]
 }
 
 model Vehicle {
@@ -135,15 +137,33 @@ model ServiceRequest {
 }
 
 model SparePart {
-  id        String    @id @default(cuid())
-  name      String
-  price     Decimal   @db.Decimal(10, 2)
-  stock     Int
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  id                  String               @id @default(cuid())
+  name                String
+  isGlobal            Boolean              @default(true)
+  createdByMechanicId String?
+  createdByMechanic   User?                @relation("CreatedSpareParts", fields: [createdByMechanicId], references: [id])
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  deletedAt           DateTime?
 
   serviceRequestParts ServiceRequestPart[]
+  mechanicInventories MechanicInventory[]
+}
+
+model MechanicInventory {
+  id                String          @id @default(cuid())
+  mechanicProfileId String
+  mechanicProfile   MechanicProfile @relation(fields: [mechanicProfileId], references: [id], onDelete: Cascade)
+  sparePartId       String
+  sparePart         SparePart       @relation(fields: [sparePartId], references: [id], onDelete: Cascade)
+  price             Decimal         @db.Decimal(10, 2)
+  stock             Int
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([mechanicProfileId, sparePartId])
+  @@index([sparePartId])
+  @@index([mechanicProfileId])
 }
 
 model ServiceRequestPart {

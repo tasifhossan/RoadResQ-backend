@@ -6,21 +6,14 @@ import { authorize } from '../../middlewares/rbac.middleware.js';
 
 export const sparePartRoutes = Router();
 
-// Apply authentication to all spare part routes
+// Apply authentication to all spare part catalog routes
 sparePartRoutes.use(authenticate);
 
 // Public / Any authenticated user routes
 sparePartRoutes.get('/', SparePartController.getAllSpareParts);
 sparePartRoutes.get('/:id', SparePartController.getSparePartById);
 
-// Admin-only management routes
+// Admin-only global catalog management routes
 sparePartRoutes.post('/', authorize(Role.ADMIN), SparePartController.createSparePart);
 sparePartRoutes.patch('/:id', authorize(Role.ADMIN), SparePartController.updateSparePart);
 sparePartRoutes.delete('/:id', authorize(Role.ADMIN), SparePartController.softDeleteSparePart);
-
-// Mechanic restocking route
-sparePartRoutes.patch(
-  '/:id/restock',
-  authorize(Role.MECHANIC),
-  SparePartController.restockSparePart
-);
