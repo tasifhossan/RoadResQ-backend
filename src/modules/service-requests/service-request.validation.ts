@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { RequestPriority } from '@prisma/client';
+import { RequestPriority, RequestStatus } from '@prisma/client';
 
 export const createServiceRequestSchema = z
   .object({
@@ -32,7 +32,35 @@ export const paginationQuerySchema = z
   })
   .strict();
 
+export const updateStatusSchema = z
+  .object({
+    status: z.enum([
+      RequestStatus.ARRIVED,
+      RequestStatus.IN_PROGRESS,
+      RequestStatus.COMPLETED,
+      RequestStatus.CANCELLED,
+    ]),
+  })
+  .strict();
+
+export const addPartsUsedSchema = z
+  .object({
+    parts: z
+      .array(
+        z
+          .object({
+            sparePartId: z.string().min(1, 'Spare part ID is required'),
+            quantity: z.number().int().min(1, 'Quantity must be at least 1'),
+          })
+          .strict()
+      )
+      .min(1, 'At least one spare part must be provided'),
+  })
+  .strict();
+
 export type CreateServiceRequestInput = z.infer<typeof createServiceRequestSchema>;
 export type NearbyMechanicsQueryInput = z.infer<typeof nearbyMechanicsQuerySchema>;
 export type AssignMechanicInput = z.infer<typeof assignMechanicSchema>;
 export type PaginationQueryInput = z.infer<typeof paginationQuerySchema>;
+export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
+export type AddPartsUsedInput = z.infer<typeof addPartsUsedSchema>;

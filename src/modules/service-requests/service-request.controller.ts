@@ -4,12 +4,16 @@ import {
   nearbyMechanicsQuerySchema,
   assignMechanicSchema,
   paginationQuerySchema,
+  updateStatusSchema,
+  addPartsUsedSchema,
 } from './service-request.validation.js';
 import {
   createServiceRequest as createServiceRequestService,
   findNearbyMechanics as findNearbyMechanicsService,
   assignMechanic as assignMechanicService,
   acceptAssignment as acceptAssignmentService,
+  updateStatus as updateStatusService,
+  addPartsUsed as addPartsUsedService,
   getMyServiceRequests as getMyServiceRequestsService,
   getAssignedServiceRequests as getAssignedServiceRequestsService,
 } from './service-request.service.js';
@@ -142,6 +146,80 @@ const acceptAssignment = async (
   }
 };
 
+const updateStatus = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const mechanicUserId = req.user!.id;
+    const serviceRequestId = req.params.id;
+    const parsed = updateStatusSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsed.error),
+      });
+      return;
+    }
+
+    const serviceRequest = await updateStatusService(
+      serviceRequestId,
+      mechanicUserId,
+      parsed.data.status
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: `Service request status updated to ${parsed.data.status}`,
+      data: { serviceRequest },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const addPartsUsed = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const mechanicUserId = req.user!.id;
+    const serviceRequestId = req.params.id;
+    const parsed = addPartsUsedSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsed.error),
+      });
+      return;
+    }
+
+    const partsUsed = await addPartsUsedService(
+      serviceRequestId,
+      mechanicUserId,
+      parsed.data.parts
+    );
+
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: 'Spare parts logged successfully',
+      data: { partsUsed },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getMyServiceRequests = async (
   req: Request,
   res: Response,
@@ -225,6 +303,8 @@ export const ServiceRequestController = {
   getNearbyMechanics,
   assignMechanic,
   acceptAssignment,
+  updateStatus,
+  addPartsUsed,
   getMyServiceRequests,
   getAssignedServiceRequests,
 };

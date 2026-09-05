@@ -10,6 +10,14 @@ export interface NearbyMechanic {
   distance: number;
 }
 
+const LEGAL_TRANSITIONS: Record<string, RequestStatus[]> = {
+  [RequestStatus.EN_ROUTE]: [RequestStatus.ARRIVED, RequestStatus.CANCELLED],
+  [RequestStatus.ARRIVED]: [RequestStatus.IN_PROGRESS, RequestStatus.CANCELLED],
+  [RequestStatus.IN_PROGRESS]: [RequestStatus.COMPLETED, RequestStatus.CANCELLED],
+  [RequestStatus.COMPLETED]: [],
+  [RequestStatus.CANCELLED]: [],
+};
+
 /**
  * Creates a new service request for a customer.
  * If vehicleId is provided, validates ownership and non-deleted status (returns 404 if invalid).
@@ -268,6 +276,187 @@ export const acceptAssignment = async (
 };
 
 /**
+ * Updates the service request status following strict state machine rules.
+ * Handles mechanic availability, totalJobs increments, and AuditLog recording atomically.
+ */
+export const updateStatus = async (
+  serviceRequestId: string,
+  mechanicUserId: string,
+  newStatus: RequestStatus
+) => {
+  return await prisma.$transaction(async (tx) => {
+    // Row-level lock on ServiceRequest
+    const requests = await tx.$queryRaw<
+      Array<{ id: string; status: string; mechanicId: string | null }>
+    >`
+      SELECT "id", "status"::text AS "status", "mechanicId"
+      FROM "ServiceRequest"
+      WHERE "id" = ${serviceRequestId}
+      FOR UPDATE
+    `;
+
+    const request = requests[0];
+    if (!request) {
+      const err = new Error('Service request not found') as Error & { statusCode: number };
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (request.mechanicId !== mechanicUserId) {
+      const err = new Error('You are not assigned to this service request') as Error & {
+        statusCode: number;
+      };
+      err.statusCode = 409;
+      throw err;
+    }
+
+    const currentStatus = request.status as RequestStatus;
+    const allowedNextStatuses = LEGAL_TRANSITIONS[currentStatus] || [];
+
+    if (!allowedNextStatuses.includes(newStatus)) {
+      const err = new Error(
+        `Cannot transition status from ${currentStatus} to ${newStatus}`
+      ) as Error & { statusCode: number };
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // Update status
+    const updatedRequest = await tx.serviceRequest.update({
+      where: { id: serviceRequestId },
+      data: { status: newStatus },
+    });
+
+    // Handle side-effects on mechanic profile availability and job stats
+    if (newStatus === RequestStatus.COMPLETED) {
+      await tx.mechanicProfile.update({
+        where: { userId: mechanicUserId },
+        data: {
+          availability: Availability.AVAILABLE,
+          totalJobs: { increment: 1 },
+        },
+      });
+    } else if (
+      newStatus === RequestStatus.CANCELLED &&
+      ([RequestStatus.EN_ROUTE, RequestStatus.ARRIVED, RequestStatus.IN_PROGRESS] as RequestStatus[]).includes(
+        currentStatus
+      )
+    ) {
+      await tx.mechanicProfile.update({
+        where: { userId: mechanicUserId },
+        data: {
+          availability: Availability.AVAILABLE,
+        },
+      });
+    }
+
+    // Log status transition to AuditLog
+    await tx.auditLog.create({
+      data: {
+        actorId: mechanicUserId,
+        action: 'STATUS_CHANGE',
+        entityType: 'ServiceRequest',
+        entityId: serviceRequestId,
+        metadata: {
+          from: currentStatus,
+          to: newStatus,
+        },
+      },
+    });
+
+    return updatedRequest;
+  });
+};
+
+/**
+ * Logs spare parts used during a service request repair.
+ * Only allowed when status is IN_PROGRESS. Atomic transaction ensures stock checks and price snapshotting.
+ */
+export const addPartsUsed = async (
+  serviceRequestId: string,
+  mechanicUserId: string,
+  parts: Array<{ sparePartId: string; quantity: number }>
+) => {
+  return await prisma.$transaction(async (tx) => {
+    const request = await tx.serviceRequest.findUnique({
+      where: { id: serviceRequestId },
+    });
+
+    if (!request) {
+      const err = new Error('Service request not found') as Error & { statusCode: number };
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (request.mechanicId !== mechanicUserId) {
+      const err = new Error('You are not assigned to this service request') as Error & {
+        statusCode: number;
+      };
+      err.statusCode = 409;
+      throw err;
+    }
+
+    if (request.status !== RequestStatus.IN_PROGRESS) {
+      const err = new Error(
+        `Spare parts can only be added when request status is IN_PROGRESS (current status: ${request.status})`
+      ) as Error & { statusCode: number };
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // Step 1: Pre-verify all spare parts exist and have sufficient stock
+    const sparePartsToProcess = [];
+    for (const item of parts) {
+      const sparePart = await tx.sparePart.findFirst({
+        where: { id: item.sparePartId, deletedAt: null },
+      });
+
+      if (!sparePart) {
+        const err = new Error(`Spare part not found: ${item.sparePartId}`) as Error & {
+          statusCode: number;
+        };
+        err.statusCode = 404;
+        throw err;
+      }
+
+      if (sparePart.stock < item.quantity) {
+        const err = new Error(
+          `Insufficient stock for spare part '${sparePart.name}'. Requested: ${item.quantity}, Available: ${sparePart.stock}`
+        ) as Error & { statusCode: number };
+        err.statusCode = 400;
+        throw err;
+      }
+
+      sparePartsToProcess.push({ sparePart, quantity: item.quantity });
+    }
+
+    // Step 2: Decrement stock and create ServiceRequestPart records with priceAtUse snapshot
+    const createdParts = [];
+    for (const item of sparePartsToProcess) {
+      await tx.sparePart.update({
+        where: { id: item.sparePart.id },
+        data: {
+          stock: { decrement: item.quantity },
+        },
+      });
+
+      const requestPart = await tx.serviceRequestPart.create({
+        data: {
+          serviceRequestId,
+          sparePartId: item.sparePart.id,
+          quantity: item.quantity,
+          priceAtUse: item.sparePart.price,
+        },
+      });
+
+      createdParts.push(requestPart);
+    }
+
+    return createdParts;
+  });
+};
+
+/**
  * Retrieves paginated service requests created by the specified customer.
  */
 export const getMyServiceRequests = async (
@@ -356,6 +545,8 @@ export const ServiceRequestService = {
   findNearbyMechanics,
   assignMechanic,
   acceptAssignment,
+  updateStatus,
+  addPartsUsed,
   getMyServiceRequests,
   getAssignedServiceRequests,
 };

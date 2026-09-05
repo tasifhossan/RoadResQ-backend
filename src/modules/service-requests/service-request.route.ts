@@ -42,3 +42,13 @@ serviceRequestRoutes.post(
   authorize(Role.MECHANIC),
   ServiceRequestController.acceptAssignment
 );
+serviceRequestRoutes.patch(
+  '/:id/status',
+  authorize(Role.MECHANIC),
+  ServiceRequestController.updateStatus
+);
+serviceRequestRoutes.post(
+  '/:id/parts',
+  authorize(Role.MECHANIC),
+  ServiceRequestController.addPartsUsed
+);
