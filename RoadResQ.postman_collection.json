@@ -1,0 +1,2003 @@
+{
+  "info": {
+    "_postman_id": "13c3f529-c5be-4099-b313-4e387c9bb003",
+    "name": "RoadResQ",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "41172664",
+    "_collection_link": "https://go.postman.co/collection/41172664-13c3f529-c5be-4099-b313-4e387c9bb003?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "CUSTOMER registration:",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Alex Johnson\",\r\n  \"email\": \"alex.johnson@example.com\",\r\n  \"password\": \"password123\",\r\n  \"role\": \"CUSTOMER\",\r\n  \"phone\": \"+1234567890\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "MECHANIC registration:",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Bob Mechanic\",\r\n  \"email\": \"bob.mechanic@example.com\",\r\n  \"password\": \"password123\",\r\n  \"role\": \"MECHANIC\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Duplicate email reg:",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Someone Else\",\r\n  \"email\": \"bob.smith@test.com\",\r\n  \"password\": \"anotherpass123\",\r\n  \"role\": \"CUSTOMER\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Validation errors:",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"A\",\r\n  \"email\": \"notanemail\",\r\n  \"password\": \"short\",\r\n  \"role\": \"ADMIN\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login Customer",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const responseData = pm.response.json();\r\n\r\nif (pm.response.code === 200 && responseData.data?.accessToken) {\r\n    // Save general tokens\r\n    pm.environment.set(\"accessToken\", responseData.data.accessToken);\r\n    pm.environment.set(\"refreshToken\", responseData.data.refreshToken);\r\n    \r\n    // Save role-specific tokens based on user role\r\n    const userRole = responseData.data.user?.role;\r\n    \r\n    if (userRole === \"CUSTOMER\") {\r\n        pm.environment.set(\"customerToken\", responseData.data.accessToken);\r\n    } else if (userRole === \"MECHANIC\") {\r\n        pm.environment.set(\"mechanicToken\", responseData.data.accessToken);\r\n    } else if (userRole === \"ADMIN\") {\r\n        pm.environment.set(\"adminToken\", responseData.data.accessToken);\r\n    }\r\n}\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"email\": \"alex.johnson@example.com\",\r\n  \"password\": \"password123\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Refresh Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const responseData = pm.response.json();\r\n\r\nif (pm.response.code === 200 && responseData.data?.accessToken) {\r\n    // Save general tokens\r\n    pm.environment.set(\"accessToken\", responseData.data.accessToken);\r\n    pm.environment.set(\"refreshToken\", responseData.data.refreshToken);\r\n    \r\n    // Save role-specific tokens based on user role\r\n    const userRole = responseData.data.user?.role;\r\n    \r\n    if (userRole === \"CUSTOMER\") {\r\n        pm.environment.set(\"customerToken\", responseData.data.accessToken);\r\n    } else if (userRole === \"MECHANIC\") {\r\n        pm.environment.set(\"mechanicToken\", responseData.data.accessToken);\r\n    } else if (userRole === \"ADMIN\") {\r\n        pm.environment.set(\"adminToken\", responseData.data.accessToken);\r\n    }\r\n}\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"refreshToken\": \"{{refreshToken}}\"\r\n}\r\n\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/refresh-token",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "refresh-token"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Logout",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"refreshToken\": \"{{refreshToken}}\"\r\n}\r\n\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/logout",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "logout"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login Mechanic",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const responseData = pm.response.json();\r\n\r\nif (pm.response.code === 200 && responseData.data?.accessToken) {\r\n    // Save general tokens\r\n    pm.environment.set(\"accessToken\", responseData.data.accessToken);\r\n    pm.environment.set(\"refreshToken\", responseData.data.refreshToken);\r\n    \r\n    // Save role-specific tokens based on user role\r\n    const userRole = responseData.data.user?.role;\r\n    \r\n    if (userRole === \"CUSTOMER\") {\r\n        pm.environment.set(\"customerToken\", responseData.data.accessToken);\r\n    } else if (userRole === \"MECHANIC\") {\r\n        pm.environment.set(\"mechanicToken\", responseData.data.accessToken);\r\n    } else if (userRole === \"ADMIN\") {\r\n        pm.environment.set(\"adminToken\", responseData.data.accessToken);\r\n    }\r\n}\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"email\": \"bob.mechanic@example.com\",\r\n  \"password\": \"password123\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Admin Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const responseData = pm.response.json();\r\n\r\nif (pm.response.code === 200 && responseData.data?.accessToken) {\r\n    // Save general tokens\r\n    pm.environment.set(\"accessToken\", responseData.data.accessToken);\r\n    pm.environment.set(\"refreshToken\", responseData.data.refreshToken);\r\n    \r\n    // Save role-specific tokens based on user role\r\n    const userRole = responseData.data.user?.role;\r\n    \r\n    if (userRole === \"CUSTOMER\") {\r\n        pm.environment.set(\"customerToken\", responseData.data.accessToken);\r\n    } else if (userRole === \"MECHANIC\") {\r\n        pm.environment.set(\"mechanicToken\", responseData.data.accessToken);\r\n    } else if (userRole === \"ADMIN\") {\r\n        pm.environment.set(\"adminToken\", responseData.data.accessToken);\r\n    }\r\n}\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"email\": \"admin@roadresq.com\",\r\n  \"password\": \"Roadresq2531342@#@\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Fetch My Profile",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/users/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Profile",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Alex Johnson\",\r\n  \"phone\": \"+1234568709\",\r\n  \"email\": \"hacked@domain.com\",\r\n  \"role\": \"ADMIN\"  \r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/users/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create a New Vehicle",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"make\": \"Toyota\",\r\n  \"model\": \"Corolla\",\r\n  \"plateNumber\": \"ABC-1234\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/vehicles",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "vehicles"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List My Vehicles",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/vehicles/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "vehicles",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get a Vehicle by ID",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/vehicles/cmtpf3sxy000el4ymxs60i67h",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "vehicles",
+            "cmtpf3sxy000el4ymxs60i67h"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update a Vehicle",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"model\": \"Camry\",\r\n  \"plateNumber\": \"UPDATED-999\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/vehicles/cmto6jv8400011y5b05wq8lfm",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "vehicles",
+            "cmto6jv8400011y5b05wq8lfm"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete a Vehicle",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/vehicles/:id",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "vehicles",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Availability",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"availability\": \"AVAILABLE\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mechanics/me/availability",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mechanics",
+            "me",
+            "availability"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Location",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"lat\": 23.8103,\r\n  \"lng\": 90.4125\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mechanics/me/location",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mechanics",
+            "me",
+            "location"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Service Request Creation",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.environment.set(\"serviceRequestId\", pm.response.json().data?.serviceRequest?.id);\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"description\": \"Brake failure on highway, need quick assistance\",\r\n  \"lat\": 40.7128,\r\n  \"lng\": -74.006,\r\n  \"priority\": \"HIGH\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/service-requests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "service-requests"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Service Request Creation with Vehicle ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.environment.set(\"serviceRequestId\", pm.response.json().data?.serviceRequest?.id);\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"description\": \"Brake failure on highway, need quick assistance\",\r\n  \"lat\": 40.7128,\r\n  \"lng\": -74.006,\r\n  \"vehicleId\": \"cmtpfyk1t000e1711eshbhqfs\",\r\n  \"priority\": \"NORMAL\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/service-requests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "service-requests"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Nearby Mechanics Search",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/service-requests/nearby-mechanics?lat=40.7128&lng=-74.0060&radiusKm=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "service-requests",
+            "nearby-mechanics"
+          ],
+          "query": [
+            {
+              "key": "lat",
+              "value": "40.7128"
+            },
+            {
+              "key": "lng",
+              "value": "-74.0060"
+            },
+            {
+              "key": "radiusKm",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Assign Mechanic (as Customer)",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"mechanicId\": \"cmtpfyj1w00071711sm9ollqu\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/service-requests/{{serviceRequestId}}/assign",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "service-requests",
+            "{{serviceRequestId}}",
+            "assign"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Accept Assignment (as Mechanic)",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/service-requests/{{serviceRequestId}}/accept",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "service-requests",
+            "{{serviceRequestId}}",
+            "accept"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "View Customer Requests (as Customer)",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/service-requests/my?page=1&limit=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "service-requests",
+            "my"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "View Assigned Requests (as Mechanic)",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/service-requests/assigned?page=1&limit=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "service-requests",
+            "assigned"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Transition Status to ARRIVED",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"status\": \"ARRIVED\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/service-requests/{{serviceRequestId}}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "service-requests",
+            "{{serviceRequestId}}",
+            "status"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Transition Status to IN_PROGRESS",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"status\": \"IN_PROGRESS\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/service-requests/{{serviceRequestId}}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "service-requests",
+            "{{serviceRequestId}}",
+            "status"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Log Spare Parts Used (Only Allowed when IN_PROGRESS)",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"parts\": [\r\n    {\r\n      \"sparePartId\": \"cmtpfyknu000o1711pn0bzddt\",\r\n      \"quantity\": 2\r\n    }\r\n  ]\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/service-requests/{{serviceRequestId}}/parts",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "service-requests",
+            "{{serviceRequestId}}",
+            "parts"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Transition Status to COMPLETED",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const responseData = pm.response.json();\r\n\r\nif (pm.response.code === 200 && responseData.data?.invoice?.id) {\r\n    pm.environment.set(\"invoiceId\", responseData.data.invoice.id);\r\n    console.log(\"Saved invoiceId to environment:\", responseData.data.invoice.id);\r\n}\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"status\": \"COMPLETED\",\r\n  \"laborCost\": 100.00\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/service-requests/{{serviceRequestId}}/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "service-requests",
+            "{{serviceRequestId}}",
+            "status"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Fetch Invoice as Customer Owner, Assigned Mechanic, ADMIN",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/invoices/{{invoiceId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "invoices",
+            "{{invoiceId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Initiate Payment",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"invoiceId\": \"{{invoiceId}}\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/payments/initiate",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "payments",
+            "initiate"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Check Payment Status",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/payments/cmtpgh95k000xorqdwd2euc33",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "payments",
+            "cmtpgh95k000xorqdwd2euc33"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Submit a Review",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"rating\": 5,\r\n  \"comment\": \"Bob arrived super fast and fixed the engine stall!\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/service-requests/{{serviceRequestId}}/review",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "service-requests",
+            "{{serviceRequestId}}",
+            "review"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Fetch Specific Review by Service Request ID",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/service-requests/{{serviceRequestId}}/review",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "service-requests",
+            "{{serviceRequestId}}",
+            "review"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Fetch Mechanic's Public Reviews",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mechanics/cmtpfyj1w00071711sm9ollqu/reviews?page=1&limit=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mechanics",
+            "cmtpfyj1w00071711sm9ollqu",
+            "reviews"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Global Catalog Part (Admin Only)",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Standard Brake Fluid 500ml\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/spare-parts",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "spare-parts"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List Global Catalog Definitions (Any Auth User)",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/spare-parts?search=Brake&page=1&limit=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "spare-parts"
+          ],
+          "query": [
+            {
+              "key": "search",
+              "value": "Brake"
+            },
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Mechanic A Adds Catalog Part to Inventory",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"sparePartId\": \"cmtoqkkcl00014h9a7umqkwdi\",\r\n  \"price\": 250.00,\r\n  \"stock\": 10\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mechanics/me/inventory",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mechanics",
+            "me",
+            "inventory"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Mechanic B Adds SAME Catalog Part with Different Price/Stock",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"sparePartId\": \"CATALOG_PART_ID\",\r\n  \"price\": 300.00,\r\n  \"stock\": 5\r\n}\r\n\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mechanics/me/inventory",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mechanics",
+            "me",
+            "inventory"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Mechanic Creates a Custom Part & Inventory Item in One Call",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{mechanicToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Custom Titanium Gasket\",\r\n  \"price\": 120.00,\r\n  \"stock\": 20\r\n}\r\n\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mechanics/me/inventory",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mechanics",
+            "me",
+            "inventory"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Mechanic's Inventory List",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mechanics/me/inventory?page=1&limit=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mechanics",
+            "me",
+            "inventory"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Restock Inventory Item (Mechanic Only)",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"quantity\": 5\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mechanics/me/inventory/cmtoqkkcl00014h9a7umqkwdi/restock",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mechanics",
+            "me",
+            "inventory",
+            "cmtoqkkcl00014h9a7umqkwdi",
+            "restock"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Price / Stock",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"price\": 270.00\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mechanics/me/inventory/cmtoqkkcl00014h9a7umqkwdi",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mechanics",
+            "me",
+            "inventory",
+            "cmtoqkkcl00014h9a7umqkwdi"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Inventory Item",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mechanics/me/inventory/cmtoqkkcl00014h9a7umqkwdi",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mechanics",
+            "me",
+            "inventory",
+            "cmtoqkkcl00014h9a7umqkwdi"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List Users with Role Filter",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/users?role=MECHANIC",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "users"
+          ],
+          "query": [
+            {
+              "key": "role",
+              "value": "MECHANIC"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Promote Customer to Mechanic",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"role\": \"MECHANIC\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/users/cmto1buam0007xs6r47gkjhwa/role",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "users",
+            "cmto1buam0007xs6r47gkjhwa",
+            "role"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Deactivate User",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/users/cmto1buam0007xs6r47gkjhwa/deactivate",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "users",
+            "cmto1buam0007xs6r47gkjhwa",
+            "deactivate"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Reactivate User",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/users/cmto1buam0007xs6r47gkjhwa/reactivate",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "users",
+            "cmto1buam0007xs6r47gkjhwa",
+            "reactivate"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Dashboard Statistics",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/dashboard-stats",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "dashboard-stats"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Audit Logs",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/audit-logs?page=1&limit=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "audit-logs"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
