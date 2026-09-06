@@ -1,4 +1,5 @@
 import { PrismaClient, Role, Availability } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -19,12 +20,16 @@ async function main() {
   await prisma.mechanicProfile.deleteMany();
   await prisma.user.deleteMany();
 
+  const defaultPassword = process.env.SEED_USER_PASSWORD || 'password123';
+  const defaultPasswordHash = await bcrypt.hash(defaultPassword, 10);
+  const adminPasswordHash = '$2b$10$qHzuUDy5Y8zq58R7AhLurOCx/V8ZKVCTJ.GbDP.qEh7vEN63nK5Ay';
+
   // 1. Admin User
   const admin = await prisma.user.create({
     data: {
       name: 'System Admin',
       email: 'admin@roadresq.com',
-      password: '$2b$10$Ybim.CnoG5DxGINahr/M4etewVAjuxQCXHuFnTW62imtBOpPcRMPy',
+      password: adminPasswordHash,
       role: Role.ADMIN,
       phone: '+18005550199',
     },
@@ -37,7 +42,7 @@ async function main() {
     data: {
       name: 'Alex Miller',
       email: 'alex.mechanic@roadresq.com',
-      password: '$2b$10$hashedpasswordplaceholderformechanic1',
+      password: defaultPasswordHash,
       role: Role.MECHANIC,
       phone: '+18005550101',
       mechanicProfile: {
@@ -58,7 +63,7 @@ async function main() {
     data: {
       name: 'Sarah Connor',
       email: 'sarah.mechanic@roadresq.com',
-      password: '$2b$10$hashedpasswordplaceholderformechanic2',
+      password: defaultPasswordHash,
       role: Role.MECHANIC,
       phone: '+18005550102',
       mechanicProfile: {
@@ -79,7 +84,7 @@ async function main() {
     data: {
       name: 'David Vance',
       email: 'david.mechanic@roadresq.com',
-      password: '$2b$10$hashedpasswordplaceholderformechanic3',
+      password: defaultPasswordHash,
       role: Role.MECHANIC,
       phone: '+18005550103',
       mechanicProfile: {
@@ -96,14 +101,41 @@ async function main() {
     include: { mechanicProfile: true },
   });
 
-  console.log('Created mechanic users:', mechanic1.email, mechanic2.email, mechanic3.email);
+  const bobMechanic = await prisma.user.create({
+    data: {
+      name: 'Bob Mechanic',
+      email: 'bob.mechanic@example.com',
+      password: defaultPasswordHash,
+      role: Role.MECHANIC,
+      phone: '+18005550104',
+      mechanicProfile: {
+        create: {
+          skills: ['Engine Diagnostics', 'Brake Service', 'Oil Change'],
+          currentLat: 40.7150,
+          currentLng: -74.001,
+          availability: Availability.AVAILABLE,
+          rating: 5.0,
+          totalJobs: 10,
+        },
+      },
+    },
+    include: { mechanicProfile: true },
+  });
+
+  console.log(
+    'Created mechanic users:',
+    mechanic1.email,
+    mechanic2.email,
+    mechanic3.email,
+    bobMechanic.email
+  );
 
   // 3. Customer Users with Vehicles
   const customer1 = await prisma.user.create({
     data: {
       name: 'John Doe',
       email: 'john.doe@gmail.com',
-      password: '$2b$10$hashedpasswordplaceholderforcustomer1',
+      password: defaultPasswordHash,
       role: Role.CUSTOMER,
       phone: '+18005550201',
       vehicles: {
@@ -120,7 +152,7 @@ async function main() {
     data: {
       name: 'Emily Watson',
       email: 'emily.watson@gmail.com',
-      password: '$2b$10$hashedpasswordplaceholderforcustomer2',
+      password: defaultPasswordHash,
       role: Role.CUSTOMER,
       phone: '+18005550202',
       vehicles: {
@@ -133,7 +165,29 @@ async function main() {
     },
   });
 
-  console.log('Created customer users with vehicles:', customer1.email, customer2.email);
+  const alexJohnson = await prisma.user.create({
+    data: {
+      name: 'Alex Johnson',
+      email: 'alex.johnson@example.com',
+      password: defaultPasswordHash,
+      role: Role.CUSTOMER,
+      phone: '+18005550203',
+      vehicles: {
+        create: {
+          make: 'Ford',
+          model: 'Mustang 2022',
+          plateNumber: 'ALX-9999',
+        },
+      },
+    },
+  });
+
+  console.log(
+    'Created customer users with vehicles:',
+    customer1.email,
+    customer2.email,
+    alexJohnson.email
+  );
 
   // 4. Global Spare Parts Catalog
   const parts = await Promise.all([
@@ -159,7 +213,12 @@ async function main() {
   console.log(`Created ${parts.length} global spare parts catalog entries`);
 
   // 5. Mechanic Inventory Rows (Per Mechanic Pricing and Stock)
-  if (mechanic1.mechanicProfile && mechanic2.mechanicProfile && mechanic3.mechanicProfile) {
+  if (
+    mechanic1.mechanicProfile &&
+    mechanic2.mechanicProfile &&
+    mechanic3.mechanicProfile &&
+    bobMechanic.mechanicProfile
+  ) {
     const inventoryEntries = [
       // Alex Miller's inventory
       { mechanicProfileId: mechanic1.mechanicProfile.id, sparePartId: battery.id, price: 120.00, stock: 15 },
@@ -178,6 +237,10 @@ async function main() {
       { mechanicProfileId: mechanic3.mechanicProfile.id, sparePartId: battery.id, price: 130.00, stock: 5 },
       { mechanicProfileId: mechanic3.mechanicProfile.id, sparePartId: tire.id, price: 90.00, stock: 8 },
       { mechanicProfileId: mechanic3.mechanicProfile.id, sparePartId: belt.id, price: 30.00, stock: 10 },
+
+      // Bob Mechanic's inventory
+      { mechanicProfileId: bobMechanic.mechanicProfile.id, sparePartId: battery.id, price: 125.00, stock: 20 },
+      { mechanicProfileId: bobMechanic.mechanicProfile.id, sparePartId: engineOil.id, price: 42.00, stock: 40 },
     ];
 
     await prisma.mechanicInventory.createMany({
@@ -198,4 +261,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

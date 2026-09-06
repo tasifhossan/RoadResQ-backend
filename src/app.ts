@@ -14,7 +14,6 @@ import { serviceRequestRoutes } from './modules/service-requests/service-request
 import { sparePartRoutes } from './modules/spare-parts/spare-part.route.js';
 import { invoiceRoutes } from './modules/invoices/invoice.route.js';
 import { paymentRoutes } from './modules/payments/payment.route.js';
-import { reviewRoutes } from './modules/reviews/review.route.js';
 import { adminRoutes } from './modules/admin/admin.route.js';
 
 const app: Application = express();
@@ -60,7 +59,6 @@ app.use('/api/v1/service-requests', serviceRequestRoutes);
 app.use('/api/v1/spare-parts', sparePartRoutes);
 app.use('/api/v1/invoices', invoiceRoutes);
 app.use('/api/v1/payments', paymentRoutes);
-app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/admin', adminRoutes);
 
 // Error Handling
