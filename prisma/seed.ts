@@ -12,6 +12,7 @@ async function main() {
   await prisma.payment.deleteMany();
   await prisma.invoice.deleteMany();
   await prisma.serviceRequestPart.deleteMany();
+  await prisma.mechanicInventory.deleteMany();
   await prisma.sparePart.deleteMany();
   await prisma.serviceRequest.deleteMany();
   await prisma.vehicle.deleteMany();
@@ -50,6 +51,7 @@ async function main() {
         },
       },
     },
+    include: { mechanicProfile: true },
   });
 
   const mechanic2 = await prisma.user.create({
@@ -70,6 +72,7 @@ async function main() {
         },
       },
     },
+    include: { mechanicProfile: true },
   });
 
   const mechanic3 = await prisma.user.create({
@@ -90,6 +93,7 @@ async function main() {
         },
       },
     },
+    include: { mechanicProfile: true },
   });
 
   console.log('Created mechanic users:', mechanic1.email, mechanic2.email, mechanic3.email);
@@ -131,26 +135,58 @@ async function main() {
 
   console.log('Created customer users with vehicles:', customer1.email, customer2.email);
 
-  // 4. Spare Parts
+  // 4. Global Spare Parts Catalog
   const parts = await Promise.all([
     prisma.sparePart.create({
-      data: { name: 'Heavy Duty 12V Battery', price: 120.00, stock: 15 },
+      data: { name: 'Heavy Duty 12V Battery', isGlobal: true, createdByMechanicId: null },
     }),
     prisma.sparePart.create({
-      data: { name: 'Brake Pad Set (Front)', price: 65.50, stock: 30 },
+      data: { name: 'Brake Pad Set (Front)', isGlobal: true, createdByMechanicId: null },
     }),
     prisma.sparePart.create({
-      data: { name: 'Synthetic Engine Oil 5L', price: 45.00, stock: 50 },
+      data: { name: 'Synthetic Engine Oil 5L', isGlobal: true, createdByMechanicId: null },
     }),
     prisma.sparePart.create({
-      data: { name: 'All-Season Tire 205/55R16', price: 95.00, stock: 20 },
+      data: { name: 'All-Season Tire 205/55R16', isGlobal: true, createdByMechanicId: null },
     }),
     prisma.sparePart.create({
-      data: { name: 'Serpentine Belt', price: 28.75, stock: 25 },
+      data: { name: 'Serpentine Belt', isGlobal: true, createdByMechanicId: null },
     }),
   ]);
 
-  console.log(`Created ${parts.length} spare parts`);
+  const [battery, brakePad, engineOil, tire, belt] = parts;
+
+  console.log(`Created ${parts.length} global spare parts catalog entries`);
+
+  // 5. Mechanic Inventory Rows (Per Mechanic Pricing and Stock)
+  if (mechanic1.mechanicProfile && mechanic2.mechanicProfile && mechanic3.mechanicProfile) {
+    const inventoryEntries = [
+      // Alex Miller's inventory
+      { mechanicProfileId: mechanic1.mechanicProfile.id, sparePartId: battery.id, price: 120.00, stock: 15 },
+      { mechanicProfileId: mechanic1.mechanicProfile.id, sparePartId: brakePad.id, price: 65.50, stock: 30 },
+      { mechanicProfileId: mechanic1.mechanicProfile.id, sparePartId: engineOil.id, price: 45.00, stock: 50 },
+      { mechanicProfileId: mechanic1.mechanicProfile.id, sparePartId: tire.id, price: 95.00, stock: 20 },
+      { mechanicProfileId: mechanic1.mechanicProfile.id, sparePartId: belt.id, price: 28.75, stock: 25 },
+
+      // Sarah Connor's inventory
+      { mechanicProfileId: mechanic2.mechanicProfile.id, sparePartId: battery.id, price: 115.00, stock: 10 },
+      { mechanicProfileId: mechanic2.mechanicProfile.id, sparePartId: brakePad.id, price: 70.00, stock: 15 },
+      { mechanicProfileId: mechanic2.mechanicProfile.id, sparePartId: engineOil.id, price: 40.00, stock: 30 },
+      { mechanicProfileId: mechanic2.mechanicProfile.id, sparePartId: belt.id, price: 25.00, stock: 12 },
+
+      // David Vance's inventory
+      { mechanicProfileId: mechanic3.mechanicProfile.id, sparePartId: battery.id, price: 130.00, stock: 5 },
+      { mechanicProfileId: mechanic3.mechanicProfile.id, sparePartId: tire.id, price: 90.00, stock: 8 },
+      { mechanicProfileId: mechanic3.mechanicProfile.id, sparePartId: belt.id, price: 30.00, stock: 10 },
+    ];
+
+    await prisma.mechanicInventory.createMany({
+      data: inventoryEntries,
+    });
+
+    console.log(`Created ${inventoryEntries.length} mechanic inventory rows`);
+  }
+
   console.log('Database seeding completed successfully.');
 }
 
@@ -162,3 +198,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
