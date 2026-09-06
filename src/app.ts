@@ -15,14 +15,19 @@ import { sparePartRoutes } from './modules/spare-parts/spare-part.route.js';
 import { invoiceRoutes } from './modules/invoices/invoice.route.js';
 import { paymentRoutes } from './modules/payments/payment.route.js';
 import { adminRoutes } from './modules/admin/admin.route.js';
+import { generalLimiter } from './middlewares/rateLimiter.js';
 
 const app: Application = express();
+
+// Trust proxy for Vercel edge infrastructure (resolves true client IP for rate limiting)
+app.set('trust proxy', 1);
 
 // Middlewares
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(generalLimiter);
 
 // Welcome route
 app.get('/', (_req: Request, res: Response) => {
