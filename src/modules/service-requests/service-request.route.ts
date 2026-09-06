@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Role } from '@prisma/client';
 import { ServiceRequestController } from './service-request.controller.js';
+import { ReviewController } from '../reviews/review.controller.js';
 import { authenticate } from '../../middlewares/auth.middleware.js';
 import { authorize } from '../../middlewares/rbac.middleware.js';
 
@@ -31,6 +32,17 @@ serviceRequestRoutes.post(
   ServiceRequestController.assignMechanic
 );
 
+// Review routes for service requests
+serviceRequestRoutes.post(
+  '/:id/review',
+  authorize(Role.CUSTOMER),
+  ReviewController.createReview
+);
+serviceRequestRoutes.get(
+  '/:id/review',
+  ReviewController.getReviewByServiceRequest
+);
+
 // Mechanic routes
 serviceRequestRoutes.get(
   '/assigned',
@@ -52,3 +64,4 @@ serviceRequestRoutes.post(
   authorize(Role.MECHANIC),
   ServiceRequestController.addPartsUsed
 );
+

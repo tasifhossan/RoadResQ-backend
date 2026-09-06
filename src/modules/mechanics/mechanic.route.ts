@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Role } from '@prisma/client';
 import { MechanicController } from './mechanic.controller.js';
+import { ReviewController } from '../reviews/review.controller.js';
 import { authenticate } from '../../middlewares/auth.middleware.js';
 import { authorize } from '../../middlewares/rbac.middleware.js';
 
@@ -20,3 +21,11 @@ mechanicRoutes.patch(
   authorize(Role.MECHANIC),
   MechanicController.updateLocation
 );
+
+// Public-ish list of a mechanic's reviews (visible to any authenticated user)
+mechanicRoutes.get(
+  '/:mechanicId/reviews',
+  authenticate,
+  ReviewController.getMechanicReviews
+);
+
