@@ -127,6 +127,7 @@ model ServiceRequest {
   updatedAt        DateTime        @updatedAt
 
   partsUsed ServiceRequestPart[]
+  images    ServiceRequestImage[]
   invoice   Invoice?
   review    Review?
 
@@ -135,6 +136,18 @@ model ServiceRequest {
   @@index([customerId])
   @@index([mechanicId])
 }
+
+model ServiceRequestImage {
+  id               String         @id @default(cuid())
+  serviceRequestId String
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  url              String
+  publicId         String
+  uploadedAt       DateTime       @default(now())
+
+  @@index([serviceRequestId])
+}
+
 
 model SparePart {
   id                  String               @id @default(cuid())

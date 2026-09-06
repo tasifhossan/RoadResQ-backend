@@ -565,6 +565,98 @@ export const getAssignedServiceRequests = async (
   };
 };
 
+/**
+ * Adds damage photos / images to a pending service request owned by customerId.
+ * Verifies request existence and customer ownership (returns 404 on mismatch).
+ * Verifies status is PENDING (returns 400 if not pending).
+ */
+export const addServiceRequestImages = async (
+  serviceRequestId: string,
+  customerId: string,
+  uploadedFiles: Express.Multer.File[]
+) => {
+  const serviceRequest = await prisma.serviceRequest.findFirst({
+    where: {
+      id: serviceRequestId,
+      customerId,
+    },
+  });
+
+  if (!serviceRequest) {
+    const err = new Error('Service request not found') as Error & { statusCode: number };
+    err.statusCode = 404;
+    throw err;
+  }
+
+  if (serviceRequest.status !== RequestStatus.PENDING) {
+    const err = new Error(
+      'Damage photos can only be added while the service request is PENDING'
+    ) as Error & { statusCode: number };
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const imageData = uploadedFiles.map((file) => {
+    const fileObj = file as unknown as Record<string, string>;
+    const url = fileObj.path || fileObj.secure_url || fileObj.url || '';
+    const publicId = fileObj.filename || fileObj.public_id || '';
+    return {
+      serviceRequestId,
+      url,
+      publicId,
+    };
+  });
+
+  await prisma.serviceRequestImage.createMany({
+    data: imageData,
+  });
+
+  const createdImages = await prisma.serviceRequestImage.findMany({
+    where: { serviceRequestId },
+    orderBy: { uploadedAt: 'asc' },
+  });
+
+  return createdImages;
+};
+
+/**
+ * Retrieves images for a service request with ownership authorization.
+ * Customer owner, assigned mechanic, or ADMIN can view images.
+ * Throws 404 if request not found or unauthorized (existence-leak protection).
+ */
+export const getServiceRequestImages = async (
+  serviceRequestId: string,
+  requestingUserId: string,
+  requestingRole: string
+) => {
+  const serviceRequest = await prisma.serviceRequest.findUnique({
+    where: { id: serviceRequestId },
+    include: {
+      images: {
+        orderBy: { uploadedAt: 'asc' },
+      },
+    },
+  });
+
+  if (!serviceRequest) {
+    const err = new Error('Service request not found') as Error & { statusCode: number };
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const isCustomerOwner = serviceRequest.customerId === requestingUserId;
+  const isAssignedMechanic = serviceRequest.mechanicId === requestingUserId;
+  const isAdmin = requestingRole === 'ADMIN';
+
+  if (!isCustomerOwner && !isAssignedMechanic && !isAdmin) {
+    const err = new Error('Service request not found') as Error & { statusCode: number };
+    err.statusCode = 404;
+    throw err;
+  }
+
+  return serviceRequest.images;
+};
+
 export const ServiceRequestService = {
   createServiceRequest,
   findNearbyMechanics,
@@ -574,4 +666,7 @@ export const ServiceRequestService = {
   addPartsUsed,
   getMyServiceRequests,
   getAssignedServiceRequests,
+  addServiceRequestImages,
+  getServiceRequestImages,
 };
+

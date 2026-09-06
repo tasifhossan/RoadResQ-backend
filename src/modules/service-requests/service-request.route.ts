@@ -4,6 +4,7 @@ import { ServiceRequestController } from './service-request.controller.js';
 import { ReviewController } from '../reviews/review.controller.js';
 import { authenticate } from '../../middlewares/auth.middleware.js';
 import { authorize } from '../../middlewares/rbac.middleware.js';
+import { handleServiceRequestImagesUpload } from '../../middlewares/upload.middleware.js';
 
 export const serviceRequestRoutes = Router();
 
@@ -30,6 +31,18 @@ serviceRequestRoutes.post(
   '/:id/assign',
   authorize(Role.CUSTOMER),
   ServiceRequestController.assignMechanic
+);
+
+// Image upload and retrieval routes
+serviceRequestRoutes.post(
+  '/:id/images',
+  authorize(Role.CUSTOMER),
+  handleServiceRequestImagesUpload,
+  ServiceRequestController.addImages
+);
+serviceRequestRoutes.get(
+  '/:id/images',
+  ServiceRequestController.getImages
 );
 
 // Review routes for service requests
@@ -64,4 +77,5 @@ serviceRequestRoutes.post(
   authorize(Role.MECHANIC),
   ServiceRequestController.addPartsUsed
 );
+
 

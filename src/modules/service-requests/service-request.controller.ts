@@ -16,7 +16,12 @@ import {
   addPartsUsed as addPartsUsedService,
   getMyServiceRequests as getMyServiceRequestsService,
   getAssignedServiceRequests as getAssignedServiceRequestsService,
+  addServiceRequestImages as addServiceRequestImagesService,
+  getServiceRequestImages as getServiceRequestImagesService,
 } from './service-request.service.js';
+
+// Controller definitions continue...
+
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
 
@@ -299,6 +304,60 @@ const getAssignedServiceRequests = async (
   }
 };
 
+const addImages = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const customerId = req.user!.id;
+    const serviceRequestId = req.params.id;
+    const uploadedFiles = (req.files as Express.Multer.File[]) || [];
+
+    const images = await addServiceRequestImagesService(
+      serviceRequestId,
+      customerId,
+      uploadedFiles
+    );
+
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: 'Damage photos uploaded successfully',
+      data: { images },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getImages = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const requestingUserId = req.user!.id;
+    const requestingRole = req.user!.role;
+    const serviceRequestId = req.params.id;
+
+    const images = await getServiceRequestImagesService(
+      serviceRequestId,
+      requestingUserId,
+      requestingRole
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Service request images retrieved successfully',
+      data: { images },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const ServiceRequestController = {
   createServiceRequest,
   getNearbyMechanics,
@@ -308,4 +367,7 @@ export const ServiceRequestController = {
   addPartsUsed,
   getMyServiceRequests,
   getAssignedServiceRequests,
+  addImages,
+  getImages,
 };
+

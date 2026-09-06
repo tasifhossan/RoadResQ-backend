@@ -41,4 +41,11 @@ export const env = {
       process.env.SSLCOMMERZ_CANCEL_URL ||
       'https://road-res-q-backend.vercel.app/api/v1/payments/cancel',
   },
+  cloudinary: {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+    apiKey: process.env.CLOUDINARY_API_KEY || '',
+    apiSecret: process.env.CLOUDINARY_API_SECRET || '',
+  },
 };
+
+

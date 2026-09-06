@@ -16,6 +16,8 @@ export const globalErrorHandler: ErrorRequestHandler = (
 
     if (typeof errObj.statusCode === 'number') {
       statusCode = errObj.statusCode;
+    } else if (errObj.name === 'MulterError') {
+      statusCode = 400;
     }
 
     if (typeof errObj.message === 'string' && errObj.message.trim().length > 0) {
@@ -25,6 +27,7 @@ export const globalErrorHandler: ErrorRequestHandler = (
     if (Array.isArray(errObj.errors) && errObj.errors.length > 0) {
       errors = errObj.errors;
     }
+
   } else if (err instanceof Error) {
     message = err.message;
   }
