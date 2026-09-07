@@ -87,11 +87,23 @@ export const initiatePayment = async (
     },
   });
 
-  const sslData = (await response.json()) as {
+  const responseText = await response.text();
+  let sslData: {
     status?: string;
     GatewayPageURL?: string;
     failedreason?: string;
-  };
+  } = {};
+
+  try {
+    sslData = JSON.parse(responseText);
+  } catch {
+
+    const err = new Error(
+      'Invalid response received from SSLCommerz payment gateway. Please verify your SSLCommerz Store credentials.'
+    ) as Error & { statusCode: number };
+    err.statusCode = 502;
+    throw err;
+  }
 
   if (sslData.status === 'SUCCESS' && sslData.GatewayPageURL) {
     return {
@@ -106,6 +118,7 @@ export const initiatePayment = async (
     throw err;
   }
 };
+
 
 export const handleSuccess = async (payload: Record<string, any>) => {
   const val_id = payload.val_id || payload.val_ID;
