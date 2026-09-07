@@ -15,12 +15,13 @@ export const handleServiceRequestImagesUpload = (
         let message = err.message;
         if (err.code === 'LIMIT_FILE_SIZE') {
           message = 'File size exceeds limit of 5MB per file.';
-        } else if (
-          err.code === 'LIMIT_FILE_COUNT' ||
-          err.code === 'LIMIT_UNEXPECTED_FILE'
-        ) {
+        } else if (err.code === 'LIMIT_FILE_COUNT') {
           message = 'Maximum 5 files allowed per request.';
+        } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+          message =
+            "Unexpected field or invalid file attachment. Please ensure the form field name is 'images' and valid file(s) are attached.";
         }
+
         const customError = new Error(message) as Error & { statusCode: number };
         customError.statusCode = 400;
         return next(customError);
