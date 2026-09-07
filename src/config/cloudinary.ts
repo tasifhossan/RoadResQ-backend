@@ -1,8 +1,10 @@
+import path from 'path';
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
 import { Request } from 'express';
 import { env } from './env.js';
+
 
 cloudinary.config({
   cloud_name: env.cloudinary.cloudName,
@@ -26,13 +28,29 @@ const storage = new CloudinaryStorage({
   },
 });
 
+
 const fileFilter = (
   _req: Request,
   file: Express.Multer.File,
   cb: multer.FileFilterCallback
 ) => {
-  const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
-  if (allowedMimeTypes.includes(file.mimetype)) {
+  const allowedMimeTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/jpg',
+    'image/pjpeg',
+    'image/jfif',
+  ];
+  const ext = path.extname(file.originalname).toLowerCase();
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+
+  const isValidMime =
+    allowedMimeTypes.includes(file.mimetype.toLowerCase()) ||
+    file.mimetype.toLowerCase().startsWith('image/');
+  const isValidExt = allowedExtensions.includes(ext);
+
+  if (isValidMime || isValidExt) {
     cb(null, true);
   } else {
     const error = new Error(
@@ -42,6 +60,7 @@ const fileFilter = (
     cb(error);
   }
 };
+
 
 export const uploadServiceRequestImages = multer({
   storage,
