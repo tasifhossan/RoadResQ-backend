@@ -3,6 +3,35 @@ import { PaymentValidation } from './payment.validation.js';
 import { PaymentService } from './payment.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
+import { env } from '../../config/env.js';
+import { prisma } from '../../config/db.js';
+
+const resolveRequestIdFromPayload = async (
+  payload: Record<string, any>
+): Promise<{ requestId?: string; invoiceId?: string }> => {
+  const tranId = payload.tran_id || payload.tran_ID;
+  if (!tranId) return {};
+
+  try {
+    const payment = await prisma.payment.findFirst({
+      where: {
+        OR: [{ id: tranId }, { transactionId: tranId }],
+      },
+      include: { invoice: true },
+    });
+
+    if (payment?.invoice) {
+      return {
+        requestId: payment.invoice.serviceRequestId,
+        invoiceId: payment.invoice.id,
+      };
+    }
+  } catch {
+    // Ignore errors during helper fallback lookup
+  }
+
+  return {};
+};
 
 const initiatePayment = async (
   req: Request,
@@ -40,63 +69,71 @@ const initiatePayment = async (
   }
 };
 
-const handleSuccess = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+const handleSuccess = async (req: Request, res: Response): Promise<void> => {
+  const payload = { ...req.query, ...req.body };
   try {
-    const payload = { ...req.query, ...req.body };
     const result = await PaymentService.handleSuccess(payload);
+    const requestId = result.invoice?.serviceRequestId;
+    const invoiceId = result.invoice?.id;
 
-    sendResponse(res, {
-      statusCode: 200,
-      success: true,
-      message: 'Payment processed successfully',
-      data: result,
-    });
-  } catch (error) {
-    next(error);
+    if (requestId && invoiceId) {
+      res.redirect(
+        303,
+        `${env.frontendUrl}/payment/success?requestId=${encodeURIComponent(requestId)}&invoiceId=${encodeURIComponent(invoiceId)}`
+      );
+      return;
+    }
+
+    res.redirect(303, `${env.frontendUrl}/payment/fail?reason=invalid_request`);
+  } catch {
+    const { requestId } = await resolveRequestIdFromPayload(payload);
+    const reason = 'validation_failed';
+    const redirectUrl = requestId
+      ? `${env.frontendUrl}/payment/fail?requestId=${encodeURIComponent(requestId)}&reason=${reason}`
+      : `${env.frontendUrl}/payment/fail?reason=${reason}`;
+    res.redirect(303, redirectUrl);
   }
 };
 
-const handleFail = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+const handleFail = async (req: Request, res: Response): Promise<void> => {
+  const payload = { ...req.query, ...req.body };
   try {
-    const payload = { ...req.query, ...req.body };
     const result = await PaymentService.handleFail(payload);
+    const requestId = result?.invoice?.serviceRequestId;
+    const reason = 'payment_failed';
 
-    sendResponse(res, {
-      statusCode: 200,
-      success: true,
-      message: 'Payment failed',
-      data: result,
-    });
-  } catch (error) {
-    next(error);
+    const redirectUrl = requestId
+      ? `${env.frontendUrl}/payment/fail?requestId=${encodeURIComponent(requestId)}&reason=${reason}`
+      : `${env.frontendUrl}/payment/fail?reason=${reason}`;
+
+    res.redirect(303, redirectUrl);
+  } catch {
+    const { requestId } = await resolveRequestIdFromPayload(payload);
+    const reason = 'payment_failed';
+    const redirectUrl = requestId
+      ? `${env.frontendUrl}/payment/fail?requestId=${encodeURIComponent(requestId)}&reason=${reason}`
+      : `${env.frontendUrl}/payment/fail?reason=${reason}`;
+    res.redirect(303, redirectUrl);
   }
 };
 
-const handleCancel = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+const handleCancel = async (req: Request, res: Response): Promise<void> => {
+  const payload = { ...req.query, ...req.body };
   try {
-    const payload = { ...req.query, ...req.body };
     const result = await PaymentService.handleCancel(payload);
+    const requestId = result?.invoice?.serviceRequestId;
 
-    sendResponse(res, {
-      statusCode: 200,
-      success: true,
-      message: 'Payment cancelled',
-      data: result,
-    });
-  } catch (error) {
-    next(error);
+    const redirectUrl = requestId
+      ? `${env.frontendUrl}/payment/cancel?requestId=${encodeURIComponent(requestId)}`
+      : `${env.frontendUrl}/payment/cancel`;
+
+    res.redirect(303, redirectUrl);
+  } catch {
+    const { requestId } = await resolveRequestIdFromPayload(payload);
+    const redirectUrl = requestId
+      ? `${env.frontendUrl}/payment/cancel?requestId=${encodeURIComponent(requestId)}`
+      : `${env.frontendUrl}/payment/cancel`;
+    res.redirect(303, redirectUrl);
   }
 };
 
