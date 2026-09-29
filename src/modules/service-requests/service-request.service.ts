@@ -657,6 +657,109 @@ export const getServiceRequestImages = async (
   return serviceRequest.images;
 };
 
+/**
+ * Retrieves a single service request by ID with full details.
+ * Access is restricted to the owning CUSTOMER, ASSIGNED MECHANIC, or ADMIN.
+ * Throws 404 if request is not found or if the requesting user is unauthorized (existence protection).
+ */
+export const getServiceRequestById = async (
+  serviceRequestId: string,
+  requestingUserId: string,
+  requestingRole: string
+) => {
+  const serviceRequest = await prisma.serviceRequest.findUnique({
+    where: { id: serviceRequestId },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+        },
+      },
+      vehicle: true,
+      mechanic: {
+        select: {
+          id: true,
+          name: true,
+          mechanicProfile: {
+            select: {
+              rating: true,
+              availability: true,
+              currentLat: true,
+              currentLng: true,
+            },
+          },
+        },
+      },
+      images: {
+        orderBy: { uploadedAt: 'asc' },
+      },
+      partsUsed: {
+        include: {
+          sparePart: true,
+        },
+      },
+      invoice: {
+        include: {
+          payment: true,
+        },
+      },
+      review: true,
+    },
+  });
+
+  if (!serviceRequest) {
+    const err = new Error('Service request not found') as Error & { statusCode: number };
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const isCustomerOwner = serviceRequest.customerId === requestingUserId;
+  const isAssignedMechanic = serviceRequest.mechanicId === requestingUserId;
+  const isAdmin = requestingRole === 'ADMIN';
+
+  if (!isCustomerOwner && !isAssignedMechanic && !isAdmin) {
+    const err = new Error('Service request not found') as Error & { statusCode: number };
+    err.statusCode = 404;
+    throw err;
+  }
+
+  // Fetch status transition history from AuditLog
+  const auditLogs = await prisma.auditLog.findMany({
+    where: {
+      entityType: 'ServiceRequest',
+      entityId: serviceRequestId,
+      action: 'STATUS_CHANGE',
+    },
+    orderBy: { createdAt: 'asc' },
+    include: {
+      actor: {
+        select: {
+          role: true,
+        },
+      },
+    },
+  });
+
+  const statusHistory = auditLogs.map((log) => {
+    const metadata = log.metadata as { from?: string; to?: string } | null;
+    return {
+      id: log.id,
+      fromStatus: metadata?.from || null,
+      toStatus: metadata?.to || null,
+      timestamp: log.createdAt,
+      actorRole: log.actor?.role || null,
+    };
+  });
+
+  return {
+    ...serviceRequest,
+    statusHistory,
+  };
+};
+
 export const ServiceRequestService = {
   createServiceRequest,
   findNearbyMechanics,
@@ -668,5 +771,7 @@ export const ServiceRequestService = {
   getAssignedServiceRequests,
   addServiceRequestImages,
   getServiceRequestImages,
+  getServiceRequestById,
 };
+
 

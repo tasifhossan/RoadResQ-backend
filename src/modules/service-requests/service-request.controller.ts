@@ -6,6 +6,7 @@ import {
   paginationQuerySchema,
   updateStatusSchema,
   addPartsUsedSchema,
+  serviceRequestIdParamSchema,
 } from './service-request.validation.js';
 import {
   createServiceRequest as createServiceRequestService,
@@ -18,6 +19,7 @@ import {
   getAssignedServiceRequests as getAssignedServiceRequestsService,
   addServiceRequestImages as addServiceRequestImagesService,
   getServiceRequestImages as getServiceRequestImagesService,
+  getServiceRequestById as getServiceRequestByIdService,
 } from './service-request.service.js';
 
 // Controller definitions continue...
@@ -358,6 +360,45 @@ const getImages = async (
   }
 };
 
+const getServiceRequestById = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const parsedParams = serviceRequestIdParamSchema.safeParse(req.params);
+
+    if (!parsedParams.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsedParams.error),
+      });
+      return;
+    }
+
+    const serviceRequestId = parsedParams.data.id;
+    const requestingUserId = req.user!.id;
+    const requestingRole = req.user!.role;
+
+    const serviceRequest = await getServiceRequestByIdService(
+      serviceRequestId,
+      requestingUserId,
+      requestingRole
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Service request details retrieved successfully',
+      data: { serviceRequest },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const ServiceRequestController = {
   createServiceRequest,
   getNearbyMechanics,
@@ -369,5 +410,6 @@ export const ServiceRequestController = {
   getAssignedServiceRequests,
   addImages,
   getImages,
+  getServiceRequestById,
 };
 

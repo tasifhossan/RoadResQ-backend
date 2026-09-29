@@ -981,6 +981,49 @@
       "response": []
     },
     {
+      "name": "Get Service Request Details by ID",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/service-requests/:id",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "service-requests",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "{{serviceRequestId}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "Transition Status to ARRIVED",
       "request": {
         "auth": {

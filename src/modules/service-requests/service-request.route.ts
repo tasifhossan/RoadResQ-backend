@@ -78,4 +78,11 @@ serviceRequestRoutes.post(
   ServiceRequestController.addPartsUsed
 );
 
+// Detail route for single service request (access: owner customer, assigned mechanic, or admin)
+serviceRequestRoutes.get(
+  '/:id',
+  ServiceRequestController.getServiceRequestById
+);
+
+
 

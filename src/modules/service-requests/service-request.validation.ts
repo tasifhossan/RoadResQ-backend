@@ -59,9 +59,17 @@ export const addPartsUsedSchema = z
   })
   .strict();
 
+export const serviceRequestIdParamSchema = z
+  .object({
+    id: z.string().min(1, 'Service request ID is required'),
+  })
+  .strict();
+
 export type CreateServiceRequestInput = z.infer<typeof createServiceRequestSchema>;
 export type NearbyMechanicsQueryInput = z.infer<typeof nearbyMechanicsQuerySchema>;
 export type AssignMechanicInput = z.infer<typeof assignMechanicSchema>;
 export type PaginationQueryInput = z.infer<typeof paginationQuerySchema>;
 export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
 export type AddPartsUsedInput = z.infer<typeof addPartsUsedSchema>;
+export type ServiceRequestIdParamInput = z.infer<typeof serviceRequestIdParamSchema>;
+

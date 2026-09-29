@@ -221,7 +221,7 @@ src/
 
 The complete REST API postman collection is available at [`RoadResQ.postman_collection.json`](./RoadResQ.postman_collection.json).
 
-### Endpoint Overview (Total 48 Registered Endpoints)
+### Endpoint Overview (Total 49 Registered Endpoints)
 
 | Module | Base Path | Total Endpoints | Description |
 | :--- | :--- | :---: | :--- |
@@ -231,7 +231,7 @@ The complete REST API postman collection is available at [`RoadResQ.postman_coll
 | **Vehicles** | `/api/v1/vehicles` | 5 | Customer vehicle registration, listing, retrieval, update, and soft delete. |
 | **Mechanics** | `/api/v1/mechanics` | 3 | Mechanic availability state updates, location tracking, and mechanic reviews list. |
 | **Mechanic Inventory** | `/api/v1/mechanics/me/inventory` | 5 | Mechanic inventory management (add catalog part, view stock, edit price, restock, delete). |
-| **Service Requests** | `/api/v1/service-requests` | 10 | Service request creation, nearby mechanic search, mechanic assignment, status transitions, parts usage, and request reviews. |
+| **Service Requests** | `/api/v1/service-requests` | 11 | Service request creation, nearby mechanic search, mechanic assignment, detailed request lookup (`/:id`), status transitions, parts usage, damage image upload, and request reviews. |
 | **Spare Parts Catalog** | `/api/v1/spare-parts` | 5 | Global catalog viewing and admin catalog management (CRUD). |
 | **Invoices** | `/api/v1/invoices` | 1 | Detailed invoice retrieval for completed service requests. |
 | **Payments** | `/api/v1/payments` | 5 | SSLCommerz payment session initiation, payment status check, and callback endpoints (`success`, `fail`, `cancel`). |
