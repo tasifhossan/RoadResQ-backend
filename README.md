@@ -136,6 +136,7 @@ Create a `.env` file in the project root based on `.env.example`:
 # Application
 PORT=5000
 NODE_ENV=development
+FRONTEND_URL="http://localhost:3000"
 
 # Database Connections (Neon PostgreSQL)
 DATABASE_URL="postgresql://<user>:<password>@<neon-host-pooler>/roadresq?sslmode=require"

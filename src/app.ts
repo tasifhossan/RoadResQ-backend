@@ -16,15 +16,31 @@ import { invoiceRoutes } from './modules/invoices/invoice.route.js';
 import { paymentRoutes } from './modules/payments/payment.route.js';
 import { adminRoutes } from './modules/admin/admin.route.js';
 import { generalLimiter } from './middlewares/rateLimiter.js';
+import { env } from './config/env.js';
 
 const app: Application = express();
 
 // Trust proxy for Vercel edge infrastructure (resolves true client IP for rate limiting)
 app.set('trust proxy', 1);
 
-// Middlewares
+// CORS configuration (allowlist FRONTEND_URL and http://localhost:3000)
+const allowedOrigins = Array.from(new Set([env.frontendUrl, 'http://localhost:3000']));
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
+    credentials: false,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Authorization', 'Content-Type'],
+  })
+);
 app.use(helmet());
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(generalLimiter);
