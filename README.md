@@ -56,7 +56,7 @@ RoadResQ is a robust, production-ready, backend-only REST API (built without a f
 - ⭐ **Customer Reviews & Rating Aggregation**: Post-service customer feedback system that automatically recalculates and updates the mechanic's overall rating average on their profile.
 - 📊 **Admin Dashboard & Audit Logging**: Admin statistics endpoint returning platform KPIs (total revenue, completed jobs, active mechanics) and system-wide audit trail logs.
 - 🗑️ **Soft Deletion & Clean Filtering**: Soft delete support across User, Vehicle, and SparePart resources ensuring historical record retention.
-- 📑 **Pagination, Search & Filtering**: Standardized query pagination (`page`, `limit`) and case-insensitive search (`?search=`) across list endpoints.
+- 📑 **Pagination, Search & Filtering**: Standardized query pagination (`page`, `limit`), case-insensitive search (`?search=`), enum status filtering, and sorting (`sortBy`, `sortOrder`). Includes `lowStock` filtering for mechanic inventory using threshold `LOW_STOCK_THRESHOLD = 5`.
 
 ---
 

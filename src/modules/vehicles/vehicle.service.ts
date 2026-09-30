@@ -1,6 +1,7 @@
 import { prisma } from '../../config/db.js';
-import { CreateVehicleInput, UpdateVehicleInput } from './vehicle.validation.js';
+import { CreateVehicleInput, UpdateVehicleInput, GetMyVehiclesQueryInput } from './vehicle.validation.js';
 import { buildPaginatedResponse } from '../../utils/pagination.js';
+import { Prisma } from '@prisma/client';
 
 /**
  * Creates a new vehicle record owned by the specified customer.
@@ -23,14 +24,24 @@ export const createVehicle = async (ownerId: string, data: CreateVehicleInput) =
  */
 export const getMyVehicles = async (
   ownerId: string,
-  page: number = 1,
-  limit: number = 20
+  options: Partial<GetMyVehiclesQueryInput> = {}
 ) => {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 20;
   const skip = (page - 1) * limit;
 
-  const whereClause = {
+  const whereClause: Prisma.VehicleWhereInput = {
     customerId: ownerId,
     deletedAt: null,
+    ...(options.search
+      ? {
+          OR: [
+            { make: { contains: options.search, mode: 'insensitive' } },
+            { model: { contains: options.search, mode: 'insensitive' } },
+            { plateNumber: { contains: options.search, mode: 'insensitive' } },
+          ],
+        }
+      : {}),
   };
 
   const [total, vehicles] = await Promise.all([

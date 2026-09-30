@@ -1,8 +1,9 @@
 import { RequestStatus, Availability } from '@prisma/client';
 import { prisma } from '../../config/db.js';
-import { CreateServiceRequestInput } from './service-request.validation.js';
+import { CreateServiceRequestInput, ServiceRequestListQueryInput } from './service-request.validation.js';
 import { generateInvoice } from '../invoices/invoice.service.js';
 import { buildPaginatedResponse } from '../../utils/pagination.js';
+import { Prisma } from '@prisma/client';
 
 export interface NearbyMechanic {
   id: string;
@@ -487,16 +488,24 @@ export const addPartsUsed = async (
  */
 export const getMyServiceRequests = async (
   customerId: string,
-  page: number = 1,
-  limit: number = 10
+  options: Partial<ServiceRequestListQueryInput> = {}
 ) => {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 10;
   const skip = (page - 1) * limit;
+  const sortBy = options.sortBy ?? 'createdAt';
+  const sortOrder = options.sortOrder ?? 'desc';
+
+  const where: Prisma.ServiceRequestWhereInput = {
+    customerId,
+    ...(options.status ? { status: options.status } : {}),
+  };
 
   const [total, serviceRequests] = await Promise.all([
-    prisma.serviceRequest.count({ where: { customerId } }),
+    prisma.serviceRequest.count({ where }),
     prisma.serviceRequest.findMany({
-      where: { customerId },
-      orderBy: { createdAt: 'desc' },
+      where,
+      orderBy: { [sortBy]: sortOrder },
       skip,
       take: limit,
       include: {
@@ -521,16 +530,24 @@ export const getMyServiceRequests = async (
  */
 export const getAssignedServiceRequests = async (
   mechanicUserId: string,
-  page: number = 1,
-  limit: number = 10
+  options: Partial<ServiceRequestListQueryInput> = {}
 ) => {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 10;
   const skip = (page - 1) * limit;
+  const sortBy = options.sortBy ?? 'createdAt';
+  const sortOrder = options.sortOrder ?? 'desc';
+
+  const where: Prisma.ServiceRequestWhereInput = {
+    mechanicId: mechanicUserId,
+    ...(options.status ? { status: options.status } : {}),
+  };
 
   const [total, serviceRequests] = await Promise.all([
-    prisma.serviceRequest.count({ where: { mechanicId: mechanicUserId } }),
+    prisma.serviceRequest.count({ where }),
     prisma.serviceRequest.findMany({
-      where: { mechanicId: mechanicUserId },
-      orderBy: { createdAt: 'desc' },
+      where,
+      orderBy: { [sortBy]: sortOrder },
       skip,
       take: limit,
       include: {

@@ -1,15 +1,31 @@
 import { Availability, InvoiceStatus, Prisma, RequestStatus, Role } from '@prisma/client';
 import { prisma } from '../../config/db.js';
 import { buildPaginatedResponse } from '../../utils/pagination.js';
+import { GetUsersQueryInput, GetAuditLogsQueryInput } from './admin.validation.js';
 
-export const getAllUsers = async (
-  page: number = 1,
-  limit: number = 10,
-  roleFilter?: Role
-) => {
+export const getAllUsers = async (options: Partial<GetUsersQueryInput> = {}) => {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 10;
   const skip = (page - 1) * limit;
+  const sortBy = options.sortBy ?? 'createdAt';
+  const sortOrder = options.sortOrder ?? 'desc';
 
-  const whereClause: Prisma.UserWhereInput = roleFilter ? { role: roleFilter } : {};
+  const whereClause: Prisma.UserWhereInput = {
+    ...(options.role ? { role: options.role } : {}),
+    ...(options.isActive === true
+      ? { deletedAt: null }
+      : options.isActive === false
+      ? { deletedAt: { not: null } }
+      : {}),
+    ...(options.search
+      ? {
+          OR: [
+            { name: { contains: options.search, mode: 'insensitive' } },
+            { email: { contains: options.search, mode: 'insensitive' } },
+          ],
+        }
+      : {}),
+  };
 
   const selectFields = {
     id: true,
@@ -30,7 +46,7 @@ export const getAllUsers = async (
       select: selectFields,
       skip,
       take: limit,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { [sortBy]: sortOrder },
     }),
   ]);
 
@@ -308,17 +324,22 @@ export const getDashboardStats = async () => {
   };
 };
 
-export const getAuditLogs = async (
-  page: number = 1,
-  limit: number = 10,
-  entityTypeFilter?: string,
-  actionFilter?: string
-) => {
+export const getAuditLogs = async (options: Partial<GetAuditLogsQueryInput> = {}) => {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 10;
   const skip = (page - 1) * limit;
 
   const whereClause: Prisma.AuditLogWhereInput = {
-    ...(entityTypeFilter ? { entityType: entityTypeFilter } : {}),
-    ...(actionFilter ? { action: actionFilter } : {}),
+    ...(options.entityType ? { entityType: options.entityType } : {}),
+    ...(options.action ? { action: options.action } : {}),
+    ...(options.from || options.to
+      ? {
+          createdAt: {
+            ...(options.from ? { gte: new Date(options.from) } : {}),
+            ...(options.to ? { lte: new Date(options.to) } : {}),
+          },
+        }
+      : {}),
   };
 
   const [total, result] = await Promise.all([

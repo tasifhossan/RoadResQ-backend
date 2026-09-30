@@ -18,6 +18,27 @@ export const paginationQuerySchema = createPaginationQuerySchema(10);
 
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
 
+/**
+ * Coerces string 'true' / 'false' to boolean, rejects other invalid non-booleans.
+ */
+export const booleanQuerySchema = z.preprocess((val) => {
+  if (typeof val === 'string') {
+    if (val.toLowerCase() === 'true') return true;
+    if (val.toLowerCase() === 'false') return false;
+  }
+  return val;
+}, z.boolean().optional());
+
+/**
+ * Validates ISO date string formats for date range query filters.
+ */
+export const dateQuerySchema = z
+  .string()
+  .refine((val) => !isNaN(Date.parse(val)), {
+    message: 'Invalid date format',
+  })
+  .optional();
+
 export interface PaginationMeta {
   page: number;
   limit: number;

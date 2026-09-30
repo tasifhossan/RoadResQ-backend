@@ -1,6 +1,9 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../config/db.js';
 import { buildPaginatedResponse } from '../../utils/pagination.js';
+import { GetInventoryQueryInput } from './mechanic-inventory.validation.js';
+
+export const LOW_STOCK_THRESHOLD = 5;
 
 export const addInventoryItem = async (
   mechanicUserId: string,
@@ -95,8 +98,7 @@ export const addInventoryItem = async (
 
 export const getMyInventory = async (
   mechanicUserId: string,
-  page: number = 1,
-  limit: number = 10
+  options: Partial<GetInventoryQueryInput> = {}
 ) => {
   const mechanicProfile = await prisma.mechanicProfile.findUnique({
     where: { userId: mechanicUserId },
@@ -108,13 +110,23 @@ export const getMyInventory = async (
     throw err;
   }
 
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 10;
   const skip = (page - 1) * limit;
 
   const whereClause: Prisma.MechanicInventoryWhereInput = {
     mechanicProfileId: mechanicProfile.id,
     sparePart: {
       deletedAt: null,
+      ...(options.search
+        ? { name: { contains: options.search, mode: 'insensitive' } }
+        : {}),
     },
+    ...(options.lowStock === true
+      ? { stock: { lte: LOW_STOCK_THRESHOLD } }
+      : options.lowStock === false
+      ? { stock: { gt: LOW_STOCK_THRESHOLD } }
+      : {}),
   };
 
   const [total, result] = await Promise.all([

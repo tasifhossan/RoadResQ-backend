@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { booleanQuerySchema } from '../../utils/pagination.js';
 
 const addInventoryItemSchema = z
   .object({
@@ -43,10 +44,16 @@ const restockInventoryItemSchema = z
   })
   .strict();
 
-const getInventoryQuerySchema = z.object({
-  page: z.string().optional().transform((val) => (val ? Math.max(1, parseInt(val, 10) || 1) : 1)),
-  limit: z.string().optional().transform((val) => (val ? Math.max(1, parseInt(val, 10) || 10) : 10)),
-});
+const getInventoryQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).optional().default(1),
+    limit: z.coerce.number().int().min(1).max(50).optional().default(10),
+    search: z.string().optional(),
+    lowStock: booleanQuerySchema,
+  })
+  .strict();
+
+export type GetInventoryQueryInput = z.infer<typeof getInventoryQuerySchema>;
 
 export const MechanicInventoryValidation = {
   addInventoryItemSchema,

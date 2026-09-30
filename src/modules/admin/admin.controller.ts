@@ -3,7 +3,6 @@ import { AdminValidation } from './admin.validation.js';
 import { AdminService } from './admin.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
-import { paginationQuerySchema } from '../../utils/pagination.js';
 
 const getAllUsers = async (
   req: Request,
@@ -11,14 +10,19 @@ const getAllUsers = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const parsedQuery = paginationQuerySchema.safeParse(req.query);
+    const parsedQuery = AdminValidation.getUsersQuerySchema.safeParse(req.query);
 
-    const page = parsedQuery.success ? parsedQuery.data.page : 1;
-    const limit = parsedQuery.success ? parsedQuery.data.limit : 10;
-    const parsedRole = AdminValidation.getUsersQuerySchema.safeParse(req.query);
-    const role = parsedRole.success ? parsedRole.data.role : undefined;
+    if (!parsedQuery.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsedQuery.error),
+      });
+      return;
+    }
 
-    const result = await AdminService.getAllUsers(page, limit, role);
+    const result = await AdminService.getAllUsers(parsedQuery.data);
 
     sendResponse(res, {
       statusCode: 200,
@@ -132,19 +136,19 @@ const getAuditLogs = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const parsedQuery = paginationQuerySchema.safeParse(req.query);
+    const parsedQuery = AdminValidation.getAuditLogsQuerySchema.safeParse(req.query);
 
-    const page = parsedQuery.success ? parsedQuery.data.page : 1;
-    const limit = parsedQuery.success ? parsedQuery.data.limit : 10;
-    const entityType = typeof req.query.entityType === 'string' ? req.query.entityType : undefined;
-    const action = typeof req.query.action === 'string' ? req.query.action : undefined;
+    if (!parsedQuery.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsedQuery.error),
+      });
+      return;
+    }
 
-    const result = await AdminService.getAuditLogs(
-      page,
-      limit,
-      entityType,
-      action
-    );
+    const result = await AdminService.getAuditLogs(parsedQuery.data);
 
     sendResponse(res, {
       statusCode: 200,

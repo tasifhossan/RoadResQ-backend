@@ -46,16 +46,22 @@ const getMyInventory = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const parsedQuery = paginationQuerySchema.safeParse(req.query);
+    const parsedQuery = MechanicInventoryValidation.getInventoryQuerySchema.safeParse(req.query);
 
-    const page = parsedQuery.success ? parsedQuery.data.page : 1;
-    const limit = parsedQuery.success ? parsedQuery.data.limit : 10;
+    if (!parsedQuery.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsedQuery.error),
+      });
+      return;
+    }
+
     const mechanicUserId = req.user!.id;
-
     const result = await MechanicInventoryService.getMyInventory(
       mechanicUserId,
-      page,
-      limit
+      parsedQuery.data
     );
 
     sendResponse(res, {

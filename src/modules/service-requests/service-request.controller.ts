@@ -6,6 +6,7 @@ import {
   updateStatusSchema,
   addPartsUsedSchema,
   serviceRequestIdParamSchema,
+  serviceRequestListQuerySchema,
 } from './service-request.validation.js';
 import {
   createServiceRequest as createServiceRequestService,
@@ -235,7 +236,7 @@ const getMyServiceRequests = async (
 ): Promise<void> => {
   try {
     const customerId = req.user!.id;
-    const parsed = paginationQuerySchema.safeParse(req.query);
+    const parsed = serviceRequestListQuerySchema.safeParse(req.query);
 
     if (!parsed.success) {
       sendResponse(res, {
@@ -247,11 +248,7 @@ const getMyServiceRequests = async (
       return;
     }
 
-    const result = await getMyServiceRequestsService(
-      customerId,
-      parsed.data.page,
-      parsed.data.limit
-    );
+    const result = await getMyServiceRequestsService(customerId, parsed.data);
 
     sendResponse(res, {
       statusCode: 200,
@@ -271,7 +268,7 @@ const getAssignedServiceRequests = async (
 ): Promise<void> => {
   try {
     const mechanicUserId = req.user!.id;
-    const parsed = paginationQuerySchema.safeParse(req.query);
+    const parsed = serviceRequestListQuerySchema.safeParse(req.query);
 
     if (!parsed.success) {
       sendResponse(res, {
@@ -283,11 +280,7 @@ const getAssignedServiceRequests = async (
       return;
     }
 
-    const result = await getAssignedServiceRequestsService(
-      mechanicUserId,
-      parsed.data.page,
-      parsed.data.limit
-    );
+    const result = await getAssignedServiceRequestsService(mechanicUserId, parsed.data);
 
     sendResponse(res, {
       statusCode: 200,

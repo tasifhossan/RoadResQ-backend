@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { createVehicleSchema, updateVehicleSchema } from './vehicle.validation.js';
+import { createVehicleSchema, updateVehicleSchema, getMyVehiclesQuerySchema } from './vehicle.validation.js';
 import {
   createVehicle,
   getMyVehicles,
@@ -9,7 +9,6 @@ import {
 } from './vehicle.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
-import { createPaginationQuerySchema } from '../../utils/pagination.js';
 
 const createHandler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -46,13 +45,19 @@ const getMyVehiclesHandler = async (
 ): Promise<void> => {
   try {
     const ownerId = req.user!.id;
-    const vehiclePaginationSchema = createPaginationQuerySchema(20);
-    const parsedQuery = vehiclePaginationSchema.safeParse(req.query);
+    const parsedQuery = getMyVehiclesQuerySchema.safeParse(req.query);
 
-    const page = parsedQuery.success ? parsedQuery.data.page : 1;
-    const limit = parsedQuery.success ? parsedQuery.data.limit : 20;
+    if (!parsedQuery.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsedQuery.error),
+      });
+      return;
+    }
 
-    const result = await getMyVehicles(ownerId, page, limit);
+    const result = await getMyVehicles(ownerId, parsedQuery.data);
 
     sendResponse(res, {
       statusCode: 200,

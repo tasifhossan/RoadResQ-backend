@@ -25,10 +25,13 @@ export const assignMechanicSchema = z
   })
   .strict();
 
-export const paginationQuerySchema = z
+export const serviceRequestListQuerySchema = z
   .object({
-    page: z.coerce.number().min(1).optional().default(1),
-    limit: z.coerce.number().min(1).max(100).optional().default(10),
+    page: z.coerce.number().int().min(1).optional().default(1),
+    limit: z.coerce.number().int().min(1).max(50).optional().default(10),
+    status: z.nativeEnum(RequestStatus).optional(),
+    sortBy: z.enum(['createdAt', 'updatedAt']).optional().default('createdAt'),
+    sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
   })
   .strict();
 
@@ -68,7 +71,7 @@ export const serviceRequestIdParamSchema = z
 export type CreateServiceRequestInput = z.infer<typeof createServiceRequestSchema>;
 export type NearbyMechanicsQueryInput = z.infer<typeof nearbyMechanicsQuerySchema>;
 export type AssignMechanicInput = z.infer<typeof assignMechanicSchema>;
-export type PaginationQueryInput = z.infer<typeof paginationQuerySchema>;
+export type ServiceRequestListQueryInput = z.infer<typeof serviceRequestListQuerySchema>;
 export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
 export type AddPartsUsedInput = z.infer<typeof addPartsUsedSchema>;
 export type ServiceRequestIdParamInput = z.infer<typeof serviceRequestIdParamSchema>;
