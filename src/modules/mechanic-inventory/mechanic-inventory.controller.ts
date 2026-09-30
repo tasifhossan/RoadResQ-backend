@@ -3,6 +3,7 @@ import { MechanicInventoryValidation } from './mechanic-inventory.validation.js'
 import { MechanicInventoryService } from './mechanic-inventory.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
+import { paginationQuerySchema } from '../../utils/pagination.js';
 
 const addInventoryItem = async (
   req: Request,
@@ -45,7 +46,7 @@ const getMyInventory = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const parsedQuery = MechanicInventoryValidation.getInventoryQuerySchema.safeParse(req.query);
+    const parsedQuery = paginationQuerySchema.safeParse(req.query);
 
     const page = parsedQuery.success ? parsedQuery.data.page : 1;
     const limit = parsedQuery.success ? parsedQuery.data.limit : 10;

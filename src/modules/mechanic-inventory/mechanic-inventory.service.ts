@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../config/db.js';
+import { buildPaginatedResponse } from '../../utils/pagination.js';
 
 export const addInventoryItem = async (
   mechanicUserId: string,
@@ -127,15 +128,7 @@ export const getMyInventory = async (
     }),
   ]);
 
-  return {
-    meta: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
-    result,
-  };
+  return buildPaginatedResponse(result, total, page, limit);
 };
 
 export const updateInventoryItem = async (

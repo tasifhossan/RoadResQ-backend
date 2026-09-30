@@ -3,7 +3,6 @@ import {
   createServiceRequestSchema,
   nearbyMechanicsQuerySchema,
   assignMechanicSchema,
-  paginationQuerySchema,
   updateStatusSchema,
   addPartsUsedSchema,
   serviceRequestIdParamSchema,
@@ -26,6 +25,7 @@ import {
 
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
+import { paginationQuerySchema } from '../../utils/pagination.js';
 
 const createServiceRequest = async (
   req: Request,
@@ -87,7 +87,7 @@ const getNearbyMechanics = async (
       statusCode: 200,
       success: true,
       message: 'Nearby mechanics retrieved successfully',
-      data: { mechanics },
+      data: { items: mechanics },
     });
   } catch (error) {
     next(error);
@@ -257,10 +257,7 @@ const getMyServiceRequests = async (
       statusCode: 200,
       success: true,
       message: 'Customer service requests retrieved successfully',
-      data: {
-        meta: result.meta,
-        serviceRequests: result.serviceRequests,
-      },
+      data: result,
     });
   } catch (error) {
     next(error);
@@ -296,10 +293,7 @@ const getAssignedServiceRequests = async (
       statusCode: 200,
       success: true,
       message: 'Assigned service requests retrieved successfully',
-      data: {
-        meta: result.meta,
-        serviceRequests: result.serviceRequests,
-      },
+      data: result,
     });
   } catch (error) {
     next(error);
@@ -353,7 +347,7 @@ const getImages = async (
       statusCode: 200,
       success: true,
       message: 'Service request images retrieved successfully',
-      data: { images },
+      data: { items: images },
     });
   } catch (error) {
     next(error);

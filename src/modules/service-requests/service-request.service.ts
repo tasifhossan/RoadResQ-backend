@@ -2,6 +2,7 @@ import { RequestStatus, Availability } from '@prisma/client';
 import { prisma } from '../../config/db.js';
 import { CreateServiceRequestInput } from './service-request.validation.js';
 import { generateInvoice } from '../invoices/invoice.service.js';
+import { buildPaginatedResponse } from '../../utils/pagination.js';
 
 export interface NearbyMechanic {
   id: string;
@@ -512,15 +513,7 @@ export const getMyServiceRequests = async (
     }),
   ]);
 
-  return {
-    meta: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
-    serviceRequests,
-  };
+  return buildPaginatedResponse(serviceRequests, total, page, limit);
 };
 
 /**
@@ -554,15 +547,7 @@ export const getAssignedServiceRequests = async (
     }),
   ]);
 
-  return {
-    meta: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
-    serviceRequests,
-  };
+  return buildPaginatedResponse(serviceRequests, total, page, limit);
 };
 
 /**

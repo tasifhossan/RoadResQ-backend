@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../config/db.js';
+import { buildPaginatedResponse } from '../../utils/pagination.js';
 
 export const createSparePart = async (data: { name: string }) => {
   const sparePart = await prisma.sparePart.create({
@@ -43,15 +44,7 @@ export const getAllSpareParts = async (
     }),
   ]);
 
-  return {
-    meta: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
-    result,
-  };
+  return buildPaginatedResponse(result, total, page, limit);
 };
 
 export const getSparePartById = async (id: string) => {

@@ -3,6 +3,7 @@ import { ReviewValidation } from './review.validation.js';
 import { ReviewService } from './review.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
+import { paginationQuerySchema } from '../../utils/pagination.js';
 
 const createReview = async (
   req: Request<{ id: string }>,
@@ -48,9 +49,7 @@ const getMechanicReviews = async (
 ): Promise<void> => {
   try {
     const mechanicId = req.params.mechanicId;
-    const parsedQuery = ReviewValidation.getMechanicReviewsQuerySchema.safeParse(
-      req.query
-    );
+    const parsedQuery = paginationQuerySchema.safeParse(req.query);
 
     const page = parsedQuery.success ? parsedQuery.data.page : 1;
     const limit = parsedQuery.success ? parsedQuery.data.limit : 10;

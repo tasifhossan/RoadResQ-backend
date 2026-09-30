@@ -1,5 +1,6 @@
 import { RequestStatus, Role } from '@prisma/client';
 import { prisma } from '../../config/db.js';
+import { buildPaginatedResponse } from '../../utils/pagination.js';
 
 export interface CreateReviewData {
   rating: number;
@@ -152,15 +153,7 @@ const getMechanicReviews = async (
     }),
   ]);
 
-  return {
-    meta: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
-    data: reviews,
-  };
+  return buildPaginatedResponse(reviews, total, page, limit);
 };
 
 const getReviewByServiceRequest = async (

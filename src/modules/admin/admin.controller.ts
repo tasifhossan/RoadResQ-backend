@@ -3,6 +3,7 @@ import { AdminValidation } from './admin.validation.js';
 import { AdminService } from './admin.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
+import { paginationQuerySchema } from '../../utils/pagination.js';
 
 const getAllUsers = async (
   req: Request,
@@ -10,11 +11,12 @@ const getAllUsers = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const parsedQuery = AdminValidation.getUsersQuerySchema.safeParse(req.query);
+    const parsedQuery = paginationQuerySchema.safeParse(req.query);
 
     const page = parsedQuery.success ? parsedQuery.data.page : 1;
     const limit = parsedQuery.success ? parsedQuery.data.limit : 10;
-    const role = parsedQuery.success ? parsedQuery.data.role : undefined;
+    const parsedRole = AdminValidation.getUsersQuerySchema.safeParse(req.query);
+    const role = parsedRole.success ? parsedRole.data.role : undefined;
 
     const result = await AdminService.getAllUsers(page, limit, role);
 
@@ -130,12 +132,12 @@ const getAuditLogs = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const parsedQuery = AdminValidation.getAuditLogsQuerySchema.safeParse(req.query);
+    const parsedQuery = paginationQuerySchema.safeParse(req.query);
 
     const page = parsedQuery.success ? parsedQuery.data.page : 1;
     const limit = parsedQuery.success ? parsedQuery.data.limit : 10;
-    const entityType = parsedQuery.success ? parsedQuery.data.entityType : undefined;
-    const action = parsedQuery.success ? parsedQuery.data.action : undefined;
+    const entityType = typeof req.query.entityType === 'string' ? req.query.entityType : undefined;
+    const action = typeof req.query.action === 'string' ? req.query.action : undefined;
 
     const result = await AdminService.getAuditLogs(
       page,

@@ -3,6 +3,7 @@ import { SparePartValidation } from './spare-part.validation.js';
 import { SparePartService } from './spare-part.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
+import { paginationQuerySchema } from '../../utils/pagination.js';
 
 const createSparePart = async (
   req: Request,
@@ -41,11 +42,11 @@ const getAllSpareParts = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const parsedQuery = SparePartValidation.getSparePartsQuerySchema.safeParse(req.query);
+    const parsedQuery = paginationQuerySchema.safeParse(req.query);
 
     const page = parsedQuery.success ? parsedQuery.data.page : 1;
     const limit = parsedQuery.success ? parsedQuery.data.limit : 10;
-    const search = parsedQuery.success ? parsedQuery.data.search : undefined;
+    const search = typeof req.query.search === 'string' ? req.query.search : undefined;
 
     const result = await SparePartService.getAllSpareParts(page, limit, search);
 

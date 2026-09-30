@@ -1,5 +1,6 @@
 import { Availability, InvoiceStatus, Prisma, RequestStatus, Role } from '@prisma/client';
 import { prisma } from '../../config/db.js';
+import { buildPaginatedResponse } from '../../utils/pagination.js';
 
 export const getAllUsers = async (
   page: number = 1,
@@ -33,15 +34,7 @@ export const getAllUsers = async (
     }),
   ]);
 
-  return {
-    meta: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
-    result,
-  };
+  return buildPaginatedResponse(result, total, page, limit);
 };
 
 export const updateUserRole = async (
@@ -348,15 +341,7 @@ export const getAuditLogs = async (
     }),
   ]);
 
-  return {
-    meta: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
-    result,
-  };
+  return buildPaginatedResponse(result, total, page, limit);
 };
 
 export const AdminService = {

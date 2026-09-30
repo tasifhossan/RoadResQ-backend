@@ -1,5 +1,6 @@
 import { prisma } from '../../config/db.js';
 import { CreateVehicleInput, UpdateVehicleInput } from './vehicle.validation.js';
+import { buildPaginatedResponse } from '../../utils/pagination.js';
 
 /**
  * Creates a new vehicle record owned by the specified customer.
@@ -18,20 +19,33 @@ export const createVehicle = async (ownerId: string, data: CreateVehicleInput) =
 };
 
 /**
- * Retrieves all active (non-soft-deleted) vehicles owned by the specified customer.
+ * Retrieves paginated active (non-soft-deleted) vehicles owned by the specified customer.
  */
-export const getMyVehicles = async (ownerId: string) => {
-  const vehicles = await prisma.vehicle.findMany({
-    where: {
-      customerId: ownerId,
-      deletedAt: null,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
+export const getMyVehicles = async (
+  ownerId: string,
+  page: number = 1,
+  limit: number = 20
+) => {
+  const skip = (page - 1) * limit;
 
-  return vehicles;
+  const whereClause = {
+    customerId: ownerId,
+    deletedAt: null,
+  };
+
+  const [total, vehicles] = await Promise.all([
+    prisma.vehicle.count({ where: whereClause }),
+    prisma.vehicle.findMany({
+      where: whereClause,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip,
+      take: limit,
+    }),
+  ]);
+
+  return buildPaginatedResponse(vehicles, total, page, limit);
 };
 
 /**
