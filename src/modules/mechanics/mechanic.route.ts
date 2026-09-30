@@ -22,6 +22,14 @@ mechanicRoutes.patch(
   MechanicController.updateLocation
 );
 
+// Mechanic earnings summary endpoint scoped strictly to MECHANIC role
+mechanicRoutes.get(
+  '/me/earnings',
+  authenticate,
+  authorize(Role.MECHANIC),
+  MechanicController.getEarningsSummary
+);
+
 // Public-ish list of a mechanic's reviews (visible to any authenticated user)
 mechanicRoutes.get(
   '/:mechanicId/reviews',

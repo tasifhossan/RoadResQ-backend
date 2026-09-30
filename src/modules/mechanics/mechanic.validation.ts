@@ -17,3 +17,5 @@ export const updateLocationSchema = z
   .strict();
 
 export type UpdateLocationInput = z.infer<typeof updateLocationSchema>;
+
+export const getEarningsQuerySchema = z.object({}).strict();

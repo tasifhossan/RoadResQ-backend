@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { updateAvailabilitySchema, updateLocationSchema } from './mechanic.validation.js';
-import { updateAvailability, updateLocation } from './mechanic.service.js';
+import { updateAvailabilitySchema, updateLocationSchema, getEarningsQuerySchema } from './mechanic.validation.js';
+import { updateAvailability, updateLocation, getEarningsSummary } from './mechanic.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
 
@@ -68,7 +68,40 @@ const updateLocationHandler = async (
   }
 };
 
+const getEarningsSummaryHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const parsedQuery = getEarningsQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsedQuery.error),
+      });
+      return;
+    }
+
+    const userId = req.user!.id;
+    const summary = await getEarningsSummary(userId);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Mechanic earnings summary retrieved successfully',
+      data: summary,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const MechanicController = {
   updateAvailability: updateAvailabilityHandler,
   updateLocation: updateLocationHandler,
+  getEarningsSummary: getEarningsSummaryHandler,
 };

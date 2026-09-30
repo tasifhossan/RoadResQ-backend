@@ -222,7 +222,7 @@ src/
 
 The complete REST API postman collection is available at [`RoadResQ.postman_collection.json`](./RoadResQ.postman_collection.json).
 
-### Endpoint Overview (Total 50 Registered Endpoints)
+### Endpoint Overview (Total 51 Registered Endpoints)
 
 | Module | Base Path | Total Endpoints | Description |
 | :--- | :--- | :---: | :--- |
@@ -230,7 +230,7 @@ The complete REST API postman collection is available at [`RoadResQ.postman_coll
 | **Authentication** | `/api/v1/auth` | 4 | User registration, login, refresh token rotation, and logout. |
 | **Users** | `/api/v1/users` | 2 | Authenticated user profile retrieval and update (`/me`). |
 | **Vehicles** | `/api/v1/vehicles` | 5 | Customer vehicle registration, listing, retrieval, update, and soft delete. |
-| **Mechanics** | `/api/v1/mechanics` | 3 | Mechanic availability state updates, location tracking, and mechanic reviews list. |
+| **Mechanics** | `/api/v1/mechanics` | 4 | Mechanic availability updates, location tracking, earnings summary (`/me/earnings`), and mechanic reviews list. |
 | **Mechanic Inventory** | `/api/v1/mechanics/me/inventory` | 5 | Mechanic inventory management (add catalog part, view stock, edit price, restock, delete). |
 | **Service Requests** | `/api/v1/service-requests` | 11 | Service request creation, nearby mechanic search, mechanic assignment, detailed request lookup (`/:id`), status transitions, parts usage, damage image upload, and request reviews. |
 | **Spare Parts Catalog** | `/api/v1/spare-parts` | 5 | Global catalog viewing and admin catalog management (CRUD). |

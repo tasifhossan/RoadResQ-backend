@@ -666,6 +666,44 @@
       "response": []
     },
     {
+      "name": "Get Mechanic Earnings Summary",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/mechanics/me/earnings",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mechanics",
+            "me",
+            "earnings"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "Service Request Creation",
       "event": [
         {
