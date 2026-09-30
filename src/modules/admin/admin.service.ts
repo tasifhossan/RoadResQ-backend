@@ -306,6 +306,69 @@ export const getDashboardStats = async () => {
     ? totalRevenueAggregate._sum.totalAmount.toString()
     : '0.00';
 
+  // 1. requestsOverTime: last 14 days [{ date: 'YYYY-MM-DD', count }], zero-filled
+  const rawRequestsOverTime = await prisma.$queryRaw<
+    Array<{
+      date: string;
+      count: number | bigint;
+    }>
+  >`
+    WITH days AS (
+      SELECT to_char(d, 'YYYY-MM-DD') AS date,
+             d::date AS day_start
+      FROM generate_series(
+        CURRENT_DATE - INTERVAL '13 days',
+        CURRENT_DATE,
+        INTERVAL '1 day'
+      ) AS d
+    )
+    SELECT 
+      days.date,
+      COUNT(sr.id)::int AS count
+    FROM days
+    LEFT JOIN "ServiceRequest" sr ON to_char(sr."createdAt", 'YYYY-MM-DD') = days.date
+    GROUP BY days.date, days.day_start
+    ORDER BY days.day_start ASC;
+  `;
+
+  const requestsOverTime = rawRequestsOverTime.map((r) => ({
+    date: r.date,
+    count: Number(r.count),
+  }));
+
+  // 2. revenueByMonth: last 6 months [{ month: 'YYYY-MM', amount }], zero-filled, from PAID payments only
+  const rawRevenueByMonth = await prisma.$queryRaw<
+    Array<{
+      month: string;
+      amount: string | number;
+    }>
+  >`
+    WITH months AS (
+      SELECT to_char(date_trunc('month', m), 'YYYY-MM') AS month,
+             date_trunc('month', m) AS month_start
+      FROM generate_series(
+        date_trunc('month', CURRENT_DATE) - INTERVAL '5 months',
+        date_trunc('month', CURRENT_DATE),
+        INTERVAL '1 month'
+      ) AS m
+    )
+    SELECT 
+      months.month,
+      COALESCE(SUM(i."totalAmount"), 0)::text AS amount
+    FROM months
+    LEFT JOIN "Invoice" i ON to_char(date_trunc('month', i."createdAt"), 'YYYY-MM') = months.month AND i."status" = 'PAID'
+    GROUP BY months.month, months.month_start
+    ORDER BY months.month_start ASC;
+  `;
+
+  const revenueByMonth = rawRevenueByMonth.map((m) => {
+    const num = typeof m.amount === 'number' ? m.amount : parseFloat(m.amount.toString());
+    return {
+      month: m.month,
+      amount: isNaN(num) ? '0.00' : num.toFixed(2),
+    };
+  });
+
   return {
     users: {
       total: totalUsers,
@@ -321,6 +384,8 @@ export const getDashboardStats = async () => {
     revenue: {
       totalPaidAmount: totalRevenue,
     },
+    requestsOverTime,
+    revenueByMonth,
   };
 };
 

@@ -236,7 +236,7 @@ The complete REST API postman collection is available at [`RoadResQ.postman_coll
 | **Spare Parts Catalog** | `/api/v1/spare-parts` | 5 | Global catalog viewing and admin catalog management (CRUD). |
 | **Invoices** | `/api/v1/invoices` | 1 | Detailed invoice retrieval for completed service requests. |
 | **Payments** | `/api/v1/payments` | 6 | Customer payment history (`/my`), SSLCommerz payment session initiation, payment status check (`/:id`), and 303 redirect callback endpoints (`success`, `fail`, `cancel`). |
-| **Admin** | `/api/v1/admin` | 6 | Admin user management (role changes, deactivation, reactivation), dashboard KPIs, and audit log inspection. |
+| **Admin** | `/api/v1/admin` | 6 | Admin user management (role changes, deactivation, reactivation), dashboard KPIs with time-series analytics (requests over time, monthly revenue), and audit log inspection. |
 
 ---
 
