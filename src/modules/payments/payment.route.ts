@@ -19,6 +19,14 @@ paymentRoutes.post(
   PaymentController.initiatePayment
 );
 
+// Authenticated customer route to get my payment history (registered before /:id)
+paymentRoutes.get(
+  '/my',
+  authenticate,
+  authorize(Role.CUSTOMER),
+  PaymentController.getMyPayments
+);
+
 // Authenticated endpoint to get payment status (ownership checked)
 paymentRoutes.get(
   '/:id',

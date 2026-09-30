@@ -1,6 +1,8 @@
-import { InvoiceStatus, PaymentStatus, Role } from '@prisma/client';
+import { InvoiceStatus, PaymentStatus, Role, Prisma } from '@prisma/client';
 import { prisma } from '../../config/db.js';
 import { env } from '../../config/env.js';
+import { buildPaginatedResponse } from '../../utils/pagination.js';
+import { GetMyPaymentsQueryInput } from './payment.validation.js';
 
 export const initiatePayment = async (
   invoiceId: string,
@@ -298,10 +300,96 @@ export const getPaymentStatus = async (
   return payment;
 };
 
+export const getMyPayments = async (
+  customerId: string,
+  options: Partial<GetMyPaymentsQueryInput> = {}
+) => {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 10;
+  const skip = (page - 1) * limit;
+
+  const whereClause: Prisma.PaymentWhereInput = {
+    invoice: {
+      serviceRequest: {
+        customerId,
+      },
+    },
+    ...(options.status ? { status: options.status } : {}),
+  };
+
+  const [total, rawPayments] = await Promise.all([
+    prisma.payment.count({ where: whereClause }),
+    prisma.payment.findMany({
+      where: whereClause,
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        amount: true,
+        status: true,
+        paidAt: true,
+        createdAt: true,
+        invoice: {
+          select: {
+            id: true,
+            laborCost: true,
+            partsCost: true,
+            totalAmount: true,
+            serviceRequest: {
+              select: {
+                id: true,
+                status: true,
+                vehicle: {
+                  select: {
+                    make: true,
+                    model: true,
+                    plateNumber: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }),
+  ]);
+
+  const items = rawPayments.map((p) => ({
+    id: p.id,
+    amount: p.amount,
+    status: p.status,
+    paidAt: p.paidAt,
+    createdAt: p.createdAt,
+    invoice: {
+      id: p.invoice.id,
+      laborCost: p.invoice.laborCost,
+      partsCost: p.invoice.partsCost,
+      total: p.invoice.totalAmount,
+    },
+    serviceRequest: p.invoice.serviceRequest
+      ? {
+          id: p.invoice.serviceRequest.id,
+          status: p.invoice.serviceRequest.status,
+          vehicle: p.invoice.serviceRequest.vehicle
+            ? {
+                make: p.invoice.serviceRequest.vehicle.make,
+                model: p.invoice.serviceRequest.vehicle.model,
+                plateNumber: p.invoice.serviceRequest.vehicle.plateNumber,
+              }
+            : null,
+        }
+      : null,
+  }));
+
+  return buildPaginatedResponse(items, total, page, limit);
+};
+
 export const PaymentService = {
   initiatePayment,
   handleSuccess,
   handleFail,
   handleCancel,
   getPaymentStatus,
+  getMyPayments,
 };

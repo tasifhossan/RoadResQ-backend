@@ -164,10 +164,43 @@ const getPaymentStatus = async (
   }
 };
 
+const getMyPayments = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const parsedQuery = PaymentValidation.getMyPaymentsQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsedQuery.error),
+      });
+      return;
+    }
+
+    const customerId = req.user!.id;
+    const result = await PaymentService.getMyPayments(customerId, parsedQuery.data);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Payment history retrieved successfully',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const PaymentController = {
   initiatePayment,
   handleSuccess,
   handleFail,
   handleCancel,
   getPaymentStatus,
+  getMyPayments,
 };

@@ -222,7 +222,7 @@ src/
 
 The complete REST API postman collection is available at [`RoadResQ.postman_collection.json`](./RoadResQ.postman_collection.json).
 
-### Endpoint Overview (Total 49 Registered Endpoints)
+### Endpoint Overview (Total 50 Registered Endpoints)
 
 | Module | Base Path | Total Endpoints | Description |
 | :--- | :--- | :---: | :--- |
@@ -235,7 +235,7 @@ The complete REST API postman collection is available at [`RoadResQ.postman_coll
 | **Service Requests** | `/api/v1/service-requests` | 11 | Service request creation, nearby mechanic search, mechanic assignment, detailed request lookup (`/:id`), status transitions, parts usage, damage image upload, and request reviews. |
 | **Spare Parts Catalog** | `/api/v1/spare-parts` | 5 | Global catalog viewing and admin catalog management (CRUD). |
 | **Invoices** | `/api/v1/invoices` | 1 | Detailed invoice retrieval for completed service requests. |
-| **Payments** | `/api/v1/payments` | 5 | SSLCommerz payment session initiation, payment status check, and 303 redirect callback endpoints (`success`, `fail`, `cancel`). |
+| **Payments** | `/api/v1/payments` | 6 | Customer payment history (`/my`), SSLCommerz payment session initiation, payment status check (`/:id`), and 303 redirect callback endpoints (`success`, `fail`, `cancel`). |
 | **Admin** | `/api/v1/admin` | 6 | Admin user management (role changes, deactivation, reactivation), dashboard KPIs, and audit log inspection. |
 
 ---
