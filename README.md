@@ -249,12 +249,13 @@ The complete REST API postman collection is available at [`RoadResQ.postman_coll
 
 ## Demo Credentials
 
-The database is pre-populated via `npx prisma db seed` with test credentials across all user roles for immediate manual testing in Postman:
+The database can be idempotently pre-populated via `npx prisma db seed` (or `npm run seed`) using the `DEMO_PASSWORD` environment variable configured in `.env`. The seed script creates demo accounts across all user roles, 2 customer vehicles, global spare parts catalog, mechanic inventory (with 1 low-stock item), and 5 service requests with invoices, payments, and reviews spread over the last 10 weeks:
 
-| Role | Name | Email | Password |
+| Role | Name | Email | Password Env |
 | :--- | :--- | :--- | :--- |
-| **MECHANIC** | Alex Miller | `alex.mechanic@roadresq.com` | `password123` |
-| **CUSTOMER** | Alex Johnson | `alex.johnson@example.com` | `password123` |
+| **ADMIN** | Demo Admin | `admin@roadresq-demo.com` | `DEMO_PASSWORD` (default: `DemoPassword123!`) |
+| **CUSTOMER** | Demo Customer | `customer@roadresq-demo.com` | `DEMO_PASSWORD` (default: `DemoPassword123!`) |
+| **MECHANIC** | Demo Mechanic | `mechanic@roadresq-demo.com` | `DEMO_PASSWORD` (default: `DemoPassword123!`) |
 
 ---
 
