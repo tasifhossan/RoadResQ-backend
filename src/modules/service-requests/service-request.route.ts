@@ -32,6 +32,11 @@ serviceRequestRoutes.post(
   authorize(Role.CUSTOMER),
   ServiceRequestController.assignMechanic
 );
+serviceRequestRoutes.patch(
+  '/:id/cancel',
+  authorize(Role.CUSTOMER),
+  ServiceRequestController.cancelServiceRequest
+);
 
 // Image upload and retrieval routes
 serviceRequestRoutes.post(

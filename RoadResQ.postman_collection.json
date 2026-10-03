@@ -887,6 +887,44 @@
       "response": []
     },
     {
+      "name": "Cancel Service Request (as Customer)",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"reason\": \"Found alternative assistance\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/service-requests/{{serviceRequestId}}/cancel",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "service-requests",
+            "{{serviceRequestId}}",
+            "cancel"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "Accept Assignment (as Mechanic)",
       "request": {
         "auth": {

@@ -7,6 +7,7 @@ import {
   addPartsUsedSchema,
   serviceRequestIdParamSchema,
   serviceRequestListQuerySchema,
+  cancelServiceRequestSchema,
 } from './service-request.validation.js';
 import {
   createServiceRequest as createServiceRequestService,
@@ -20,6 +21,7 @@ import {
   addServiceRequestImages as addServiceRequestImagesService,
   getServiceRequestImages as getServiceRequestImagesService,
   getServiceRequestById as getServiceRequestByIdService,
+  cancelServiceRequest as cancelServiceRequestService,
 } from './service-request.service.js';
 
 // Controller definitions continue...
@@ -386,6 +388,54 @@ const getServiceRequestById = async (
   }
 };
 
+const cancelServiceRequest = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const customerId = req.user!.id;
+    const serviceRequestId = req.params.id;
+
+    const parsedParams = serviceRequestIdParamSchema.safeParse(req.params);
+    if (!parsedParams.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsedParams.error),
+      });
+      return;
+    }
+
+    const parsedBody = cancelServiceRequestSchema.safeParse(req.body || {});
+    if (!parsedBody.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsedBody.error),
+      });
+      return;
+    }
+
+    const serviceRequest = await cancelServiceRequestService(
+      serviceRequestId,
+      customerId,
+      parsedBody.data.reason
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Service request cancelled successfully',
+      data: { serviceRequest },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const ServiceRequestController = {
   createServiceRequest,
   getNearbyMechanics,
@@ -398,5 +448,6 @@ export const ServiceRequestController = {
   addImages,
   getImages,
   getServiceRequestById,
+  cancelServiceRequest,
 };
 

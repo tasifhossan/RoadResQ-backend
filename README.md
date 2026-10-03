@@ -32,7 +32,7 @@ RoadResQ is a robust, production-ready, backend-only REST API (built without a f
 1. **Vehicle Breakdown**: A customer registers their vehicle and files an emergency roadside assistance request with coordinates (`lat`, `lng`) and priority level.
 2. **Nearby Mechanic Search**: The system calculates distance using the Haversine formula and returns nearby available mechanics.
 3. **Dispatch & Assignment**: The customer assigns a mechanic. The system enforces strict database transactions to guarantee a mechanic cannot be double-booked.
-4. **Service Status Machine**: The assigned mechanic accepts the job and advances through legal status state machine transitions: `ASSIGNED` ➔ `EN_ROUTE` ➔ `ARRIVED` ➔ `IN_PROGRESS` ➔ `COMPLETED`.
+4. **Service Status Machine**: The assigned mechanic accepts the job and advances through legal status state machine transitions: `ASSIGNED` ➔ `EN_ROUTE` ➔ `ARRIVED` ➔ `IN_PROGRESS` ➔ `COMPLETED`. Customers can also cancel pending or assigned service requests (`PENDING`, `SEARCHING`, `ASSIGNED` ➔ `CANCELLED`).
 5. **Inventory & Parts Usage**: The mechanic records spare parts used from their own per-mechanic inventory, deducting stock and snapshotting current item prices (`priceAtUse`).
 6. **Invoicing**: Upon job completion, an automated invoice is generated incorporating labor costs and spare parts costs.
 7. **SSLCommerz Payment Integration**: The customer initiates payment, generating a hosted gateway session URL via SSLCommerz (sandbox) with server-to-server callback reconciliation (`success`, `fail`, `cancel`).
@@ -49,7 +49,7 @@ RoadResQ is a robust, production-ready, backend-only REST API (built without a f
 - 📍 **Mechanic Live Location & Availability**: Mechanics can dynamically update their real-time coordinates and availability states (`AVAILABLE`, `BUSY`, `OFFLINE`).
 - 🌐 **Haversine Nearby Mechanic Search**: Geospatial distance calculations return available mechanics sorted by proximity to the breakdown location.
 - ⚡ **Transaction-Safe Mechanic Assignment**: Uses Prisma database transactions (`$transaction`) to verify mechanic availability and lock states simultaneously, preventing race conditions or double-booking.
-- 🔄 **Status Machine Lifecycle**: Enforces rigid state machine transitions (`PENDING` ➔ `SEARCHING` ➔ `ASSIGNED` ➔ `EN_ROUTE` ➔ `ARRIVED` ➔ `IN_PROGRESS` ➔ `COMPLETED` / `CANCELLED`).
+- 🔄 **Status Machine Lifecycle**: Enforces rigid state machine transitions (`PENDING` / `SEARCHING` / `ASSIGNED` ➔ `CANCELLED` by customer, or `ASSIGNED` ➔ `EN_ROUTE` ➔ `ARRIVED` ➔ `IN_PROGRESS` ➔ `COMPLETED` / `CANCELLED` by mechanic).
 - 🛠️ **Per-Mechanic Spare Parts Inventory**: Decoupled catalog model allowing mechanics to manage their own custom/catalog stock quantities and item prices (`MechanicInventory`).
 - 📄 **Automated Digital Invoicing**: Generates detailed service request invoices snapshotting labor cost, parts cost, and total amount.
 - 💳 **SSLCommerz Payment Gateway Integration**: Real integration with SSLCommerz sandbox API for online payments, featuring payment initiation and IPN/callback handlers (`success`, `fail`, `cancel`).
@@ -222,7 +222,7 @@ src/
 
 The complete REST API postman collection is available at [`RoadResQ.postman_collection.json`](./RoadResQ.postman_collection.json).
 
-### Endpoint Overview (Total 51 Registered Endpoints)
+### Endpoint Overview (Total 52 Registered Endpoints)
 
 | Module | Base Path | Total Endpoints | Description |
 | :--- | :--- | :---: | :--- |
@@ -232,7 +232,7 @@ The complete REST API postman collection is available at [`RoadResQ.postman_coll
 | **Vehicles** | `/api/v1/vehicles` | 5 | Customer vehicle registration, listing, retrieval, update, and soft delete. |
 | **Mechanics** | `/api/v1/mechanics` | 4 | Mechanic availability updates, location tracking, earnings summary (`/me/earnings`), and mechanic reviews list. |
 | **Mechanic Inventory** | `/api/v1/mechanics/me/inventory` | 5 | Mechanic inventory management (add catalog part, view stock, edit price, restock, delete). |
-| **Service Requests** | `/api/v1/service-requests` | 11 | Service request creation, nearby mechanic search, mechanic assignment, detailed request lookup (`/:id`), status transitions, parts usage, damage image upload, and request reviews. |
+| **Service Requests** | `/api/v1/service-requests` | 12 | Service request creation, nearby mechanic search, mechanic assignment, customer request cancellation, detailed request lookup (`/:id`), status transitions, parts usage, damage image upload, and request reviews. |
 | **Spare Parts Catalog** | `/api/v1/spare-parts` | 5 | Global catalog viewing and admin catalog management (CRUD). |
 | **Invoices** | `/api/v1/invoices` | 1 | Detailed invoice retrieval for completed service requests. |
 | **Payments** | `/api/v1/payments` | 6 | Customer payment history (`/my`), SSLCommerz payment session initiation, payment status check (`/:id`), and 303 redirect callback endpoints (`success`, `fail`, `cancel`). |

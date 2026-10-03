@@ -762,6 +762,82 @@ export const getServiceRequestById = async (
   };
 };
 
+/**
+ * Cancels a PENDING, SEARCHING, or ASSIGNED service request owned by customerId in a transaction-safe manner.
+ * Uses pessimistic row locking (FOR UPDATE) to prevent race conditions (e.g. concurrent accept by mechanic).
+ * Restores availability of assigned mechanic if any, and records AuditLog entry.
+ */
+export const cancelServiceRequest = async (
+  serviceRequestId: string,
+  customerId: string,
+  reason?: string
+) => {
+  return await prisma.$transaction(async (tx) => {
+    // Row-level lock on ServiceRequest to prevent race conditions
+    const requests = await tx.$queryRaw<
+      Array<{ id: string; status: string; customerId: string; mechanicId: string | null }>
+    >`
+      SELECT "id", "status"::text AS "status", "customerId", "mechanicId"
+      FROM "ServiceRequest"
+      WHERE "id" = ${serviceRequestId}
+      FOR UPDATE
+    `;
+
+    const request = requests[0];
+    if (!request || request.customerId !== customerId) {
+      const err = new Error('Service request not found') as Error & { statusCode: number };
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const currentStatus = request.status as RequestStatus;
+    const CANCELLABLE_STATUSES: RequestStatus[] = [
+      RequestStatus.PENDING,
+      RequestStatus.SEARCHING,
+      RequestStatus.ASSIGNED,
+    ];
+
+    if (!CANCELLABLE_STATUSES.includes(currentStatus)) {
+      const err = new Error(
+        `Service request can no longer be cancelled (current status: ${currentStatus})`
+      ) as Error & { statusCode: number };
+      err.statusCode = 409;
+      throw err;
+    }
+
+    // Set CANCELLED status
+    const updatedRequest = await tx.serviceRequest.update({
+      where: { id: serviceRequestId },
+      data: { status: RequestStatus.CANCELLED },
+    });
+
+    // Release assigned mechanic if any and restore availability
+    if (request.mechanicId) {
+      await tx.mechanicProfile.updateMany({
+        where: { userId: request.mechanicId },
+        data: { availability: Availability.AVAILABLE },
+      });
+    }
+
+    // Write AuditLog entry
+    await tx.auditLog.create({
+      data: {
+        actorId: customerId,
+        action: 'STATUS_CHANGE',
+        entityType: 'ServiceRequest',
+        entityId: serviceRequestId,
+        metadata: {
+          from: currentStatus,
+          to: RequestStatus.CANCELLED,
+          ...(reason ? { reason } : {}),
+        },
+      },
+    });
+
+    return updatedRequest;
+  });
+};
+
 export const ServiceRequestService = {
   createServiceRequest,
   findNearbyMechanics,
@@ -774,6 +850,7 @@ export const ServiceRequestService = {
   addServiceRequestImages,
   getServiceRequestImages,
   getServiceRequestById,
+  cancelServiceRequest,
 };
 
 

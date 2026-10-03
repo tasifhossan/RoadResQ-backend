@@ -68,6 +68,12 @@ export const serviceRequestIdParamSchema = z
   })
   .strict();
 
+export const cancelServiceRequestSchema = z
+  .object({
+    reason: z.string().max(200, 'Reason must not exceed 200 characters').optional(),
+  })
+  .strict();
+
 export type CreateServiceRequestInput = z.infer<typeof createServiceRequestSchema>;
 export type NearbyMechanicsQueryInput = z.infer<typeof nearbyMechanicsQuerySchema>;
 export type AssignMechanicInput = z.infer<typeof assignMechanicSchema>;
@@ -75,4 +81,6 @@ export type ServiceRequestListQueryInput = z.infer<typeof serviceRequestListQuer
 export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
 export type AddPartsUsedInput = z.infer<typeof addPartsUsedSchema>;
 export type ServiceRequestIdParamInput = z.infer<typeof serviceRequestIdParamSchema>;
+export type CancelServiceRequestInput = z.infer<typeof cancelServiceRequestSchema>;
+
 
