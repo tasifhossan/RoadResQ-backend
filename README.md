@@ -257,6 +257,8 @@ The database can be idempotently pre-populated via `npx prisma db seed` (or `npm
 | **CUSTOMER** | Demo Customer | `customer@roadresq-demo.com` | `DEMO_PASSWORD` (default: `DemoPassword123!`) |
 | **MECHANIC** | Demo Mechanic | `mechanic@roadresq-demo.com` | `DEMO_PASSWORD` (default: `DemoPassword123!`) |
 
+> **Note on Demo Account Protection**: Demo accounts ending with `@roadresq-demo.com` are protected from deactivation and role updates (the system rejects these actions with `409 Conflict: Demo accounts are protected`). Admins are also prevented from deactivating or changing the role of their own account (`400 Bad Request`). Reactivation of demo accounts remains allowed, and running `npx prisma db seed` idempotently restores demo accounts (resetting roles, `deletedAt = null`, and passwords).
+
 ---
 
 ## Contact

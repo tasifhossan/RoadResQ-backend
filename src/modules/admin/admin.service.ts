@@ -53,6 +53,8 @@ export const getAllUsers = async (options: Partial<GetUsersQueryInput> = {}) => 
   return buildPaginatedResponse(result, total, page, limit);
 };
 
+export const DEMO_EMAIL_DOMAIN = '@roadresq-demo.com';
+
 export const updateUserRole = async (
   targetUserId: string,
   newRole: Role,
@@ -65,6 +67,18 @@ export const updateUserRole = async (
   if (!user) {
     const err = new Error('User not found') as Error & { statusCode: number };
     err.statusCode = 404;
+    throw err;
+  }
+
+  if (user.email.toLowerCase().endsWith(DEMO_EMAIL_DOMAIN)) {
+    const err = new Error('Demo accounts are protected') as Error & { statusCode: number };
+    err.statusCode = 409;
+    throw err;
+  }
+
+  if (targetUserId === adminUserId) {
+    const err = new Error('Admins cannot change their own role') as Error & { statusCode: number };
+    err.statusCode = 400;
     throw err;
   }
 
@@ -162,6 +176,18 @@ export const deactivateUser = async (
   if (!user) {
     const err = new Error('User not found') as Error & { statusCode: number };
     err.statusCode = 404;
+    throw err;
+  }
+
+  if (user.email.toLowerCase().endsWith(DEMO_EMAIL_DOMAIN)) {
+    const err = new Error('Demo accounts are protected') as Error & { statusCode: number };
+    err.statusCode = 409;
+    throw err;
+  }
+
+  if (targetUserId === adminUserId) {
+    const err = new Error('Admins cannot deactivate their own account') as Error & { statusCode: number };
+    err.statusCode = 400;
     throw err;
   }
 

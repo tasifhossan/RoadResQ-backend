@@ -1999,7 +1999,8 @@
             "cmto1buam0007xs6r47gkjhwa",
             "role"
           ]
-        }
+        },
+        "description": "Updates a user's role. Note: Accounts ending with @roadresq-demo.com are protected and return 409 Conflict. Admins cannot change their own role (400 Bad Request)."
       },
       "response": []
     },
@@ -2038,7 +2039,8 @@
             "cmto1buam0007xs6r47gkjhwa",
             "deactivate"
           ]
-        }
+        },
+        "description": "Soft deletes (deactivates) a user. Note: Accounts ending with @roadresq-demo.com are protected and return 409 Conflict. Admins cannot deactivate their own account (400 Bad Request)."
       },
       "response": []
     },

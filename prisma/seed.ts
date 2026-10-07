@@ -20,6 +20,8 @@ async function main() {
       name: 'Demo Admin',
       role: Role.ADMIN,
       phone: '+8801700000001',
+      deletedAt: null,
+      password: passwordHash,
     },
     create: {
       name: 'Demo Admin',
@@ -38,6 +40,8 @@ async function main() {
       name: 'Demo Customer',
       role: Role.CUSTOMER,
       phone: '+8801700000002',
+      deletedAt: null,
+      password: passwordHash,
     },
     create: {
       name: 'Demo Customer',
@@ -86,6 +90,8 @@ async function main() {
       name: 'Demo Mechanic',
       role: Role.MECHANIC,
       phone: '+8801700000003',
+      deletedAt: null,
+      password: passwordHash,
     },
     create: {
       name: 'Demo Mechanic',
