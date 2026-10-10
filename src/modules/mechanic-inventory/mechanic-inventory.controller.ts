@@ -3,7 +3,6 @@ import { MechanicInventoryValidation } from './mechanic-inventory.validation.js'
 import { MechanicInventoryService } from './mechanic-inventory.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
-import { paginationQuerySchema } from '../../utils/pagination.js';
 
 const addInventoryItem = async (
   req: Request,
