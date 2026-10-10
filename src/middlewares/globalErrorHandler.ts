@@ -21,7 +21,14 @@ export const globalErrorHandler: ErrorRequestHandler = (
     }
 
     if (typeof errObj.message === 'string' && errObj.message.trim().length > 0) {
-      message = errObj.message;
+      if (
+        errObj.message.includes("Can't reach database server") ||
+        errObj.name === "PrismaClientInitializationError"
+      ) {
+        message = 'Database server is temporarily unreachable. Please try again in a few seconds.';
+      } else {
+        message = errObj.message;
+      }
     }
 
     if (Array.isArray(errObj.errors) && errObj.errors.length > 0) {
