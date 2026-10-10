@@ -28,7 +28,6 @@ import {
 
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
-import { paginationQuerySchema } from '../../utils/pagination.js';
 
 const createServiceRequest = async (
   req: Request,
