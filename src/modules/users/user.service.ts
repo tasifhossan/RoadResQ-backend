@@ -46,6 +46,9 @@ export const updateMe = async (userId: string, data: UpdateUserInput) => {
       id: userId,
       deletedAt: null,
     },
+    include: {
+      mechanicProfile: true,
+    },
   });
 
   if (!existingUser) {
@@ -54,11 +57,42 @@ export const updateMe = async (userId: string, data: UpdateUserInput) => {
     throw err;
   }
 
+  const hasMechanicFields =
+    data.bio !== undefined || data.city !== undefined || data.yearsExperience !== undefined;
+
+  if (hasMechanicFields && existingUser.role !== 'MECHANIC') {
+    const err = new Error('Only mechanics can update mechanic profile fields') as Error & {
+      statusCode: number;
+    };
+    err.statusCode = 400;
+    throw err;
+  }
+
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {
       ...(data.name !== undefined && { name: data.name }),
       ...(data.phone !== undefined && { phone: data.phone }),
+      ...(existingUser.role === 'MECHANIC' &&
+        hasMechanicFields && {
+          mechanicProfile: {
+            upsert: {
+              create: {
+                bio: data.bio,
+                city: data.city,
+                yearsExperience: data.yearsExperience,
+                skills: [],
+              },
+              update: {
+                ...(data.bio !== undefined && { bio: data.bio }),
+                ...(data.city !== undefined && { city: data.city }),
+                ...(data.yearsExperience !== undefined && {
+                  yearsExperience: data.yearsExperience,
+                }),
+              },
+            },
+          },
+        }),
     },
     select: userSelect,
   });

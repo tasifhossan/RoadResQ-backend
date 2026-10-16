@@ -2166,6 +2166,103 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "Get Public Mechanics List",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/public/mechanics?page=1&limit=12&sortBy=rating&sortOrder=desc",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "public",
+            "mechanics"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "12"
+            },
+            {
+              "key": "sortBy",
+              "value": "rating"
+            },
+            {
+              "key": "sortOrder",
+              "value": "desc"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Public Mechanic by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/public/mechanics/{{mechanicUserId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "public",
+            "mechanics",
+            "{{mechanicUserId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Public Platform Statistics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/public/stats",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "public",
+            "stats"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Public Recent Reviews",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/public/reviews?limit=6",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "public",
+            "reviews"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "6"
+            }
+          ]
+        }
+      },
+      "response": []
     }
   ]
 }

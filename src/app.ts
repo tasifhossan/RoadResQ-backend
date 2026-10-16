@@ -15,6 +15,7 @@ import { sparePartRoutes } from './modules/spare-parts/spare-part.route.js';
 import { invoiceRoutes } from './modules/invoices/invoice.route.js';
 import { paymentRoutes } from './modules/payments/payment.route.js';
 import { adminRoutes } from './modules/admin/admin.route.js';
+import { publicRoutes } from './modules/public/public.route.js';
 import { generalLimiter } from './middlewares/rateLimiter.js';
 import { env } from './config/env.js';
 
@@ -81,6 +82,8 @@ app.use('/api/v1/spare-parts', sparePartRoutes);
 app.use('/api/v1/invoices', invoiceRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/public', publicRoutes);
+app.use('/public', publicRoutes);
 
 // Error Handling
 app.use(notFoundHandler);

@@ -108,19 +108,289 @@ async function main() {
       availability: Availability.AVAILABLE,
       currentLat: 23.8103,
       currentLng: 90.4125,
-      skills: ['Engine Repair', 'Brake Service', 'Tire Change', 'Battery Jumpstart'],
+      skills: ['Engine Repair', 'Brake Service', 'Tire Change', 'Battery Jumpstart', 'Engine', 'Brakes', 'Tire', 'Battery'],
+      bio: 'Master technician with over 10 years of expertise diagnosing automotive failures across Dhaka. Dedicated to fast roadside recovery, preventative tuning, and trustworthy diagnostics.',
+      avatarUrl: `https://api.dicebear.com/10.x/open-peeps/png?seed=${encodeURIComponent('Demo Mechanic')}`,
+      city: 'Dhaka',
+      yearsExperience: 10,
     },
     create: {
       userId: mechanicUser.id,
       availability: Availability.AVAILABLE,
       currentLat: 23.8103,
       currentLng: 90.4125,
-      skills: ['Engine Repair', 'Brake Service', 'Tire Change', 'Battery Jumpstart'],
+      skills: ['Engine Repair', 'Brake Service', 'Tire Change', 'Battery Jumpstart', 'Engine', 'Brakes', 'Tire', 'Battery'],
       rating: 5.0,
       totalJobs: 2,
+      bio: 'Master technician with over 10 years of expertise diagnosing automotive failures across Dhaka. Dedicated to fast roadside recovery, preventative tuning, and trustworthy diagnostics.',
+      avatarUrl: `https://api.dicebear.com/10.x/open-peeps/png?seed=${encodeURIComponent('Demo Mechanic')}`,
+      city: 'Dhaka',
+      yearsExperience: 10,
     },
   });
   console.log(`✅ Mechanic profile seeded: ${mechanicUser.email} (Dhaka: 23.8103, 90.4125)`);
+
+  // 3b. Seed 13 Additional Bangladeshi Demo Mechanics (14 total)
+  const additionalMechanicsData = [
+    {
+      email: 'mechanic-2@roadresq-demo.com',
+      name: 'Mohammad Rafiqul Islam',
+      phone: '+8801810000001',
+      city: 'Chattogram',
+      currentLat: 22.3569,
+      currentLng: 91.7832,
+      availability: Availability.OFFLINE,
+      skills: ['Engine', 'Brakes', 'Transmission'],
+      yearsExperience: 12,
+      bio: 'Senior automotive technician with over 12 years of expertise across diesel and petrol engines in Chattogram port area. Specializes in heavy-duty transmission overhauls and emergency roadside repairs.',
+    },
+    {
+      email: 'mechanic-3@roadresq-demo.com',
+      name: 'Tanvir Ahmed Chowdhury',
+      phone: '+8801810000002',
+      city: 'Sylhet',
+      currentLat: 24.8949,
+      currentLng: 91.8687,
+      availability: Availability.BUSY,
+      skills: ['Battery', 'Electrical', 'AC'],
+      yearsExperience: 8,
+      bio: 'Specialist in European auto electrical systems and precision climate control diagnostics in Sylhet. Known for reliable alternator repairs and modern hybrid car battery troubleshooting.',
+    },
+    {
+      email: 'mechanic-4@roadresq-demo.com',
+      name: 'Kamrul Hasan Mollah',
+      phone: '+8801810000003',
+      city: 'Rajshahi',
+      currentLat: 24.3745,
+      currentLng: 88.6042,
+      availability: Availability.AVAILABLE,
+      skills: ['Tire', 'Brakes', 'Towing'],
+      yearsExperience: 6,
+      bio: 'Fast roadside recovery expert serving the Rajshahi highway corridors with prompt response times. Skilled in pneumatic brake adjustments, wheel alignment, and heavy towing services.',
+    },
+    {
+      email: 'mechanic-5@roadresq-demo.com',
+      name: 'Mehedi Hasan Bappi',
+      phone: '+8801810000004',
+      city: 'Khulna',
+      currentLat: 22.8456,
+      currentLng: 89.5403,
+      availability: Availability.BUSY,
+      skills: ['Engine', 'Fuel Delivery', 'Battery'],
+      yearsExperience: 11,
+      bio: 'Experienced engine specialist operating out of Khulna industrial and residential zones. Provides on-the-spot fuel delivery, dead-battery jumpstarts, and complete computerized engine scans.',
+    },
+    {
+      email: 'mechanic-6@roadresq-demo.com',
+      name: 'Shahidul Alam',
+      phone: '+8801810000005',
+      city: 'Cumilla',
+      currentLat: 23.4607,
+      currentLng: 91.1809,
+      availability: Availability.OFFLINE,
+      skills: ['Towing', 'Lockout', 'Tire'],
+      yearsExperience: 9,
+      bio: 'Dedicated roadside assistance master technician covering the Dhaka-Chittagong highway near Cumilla. Proficient in non-destructive vehicle lockout entry and on-site tire balancing.',
+    },
+    {
+      email: 'mechanic-7@roadresq-demo.com',
+      name: 'Arifur Rahman',
+      phone: '+8801810000006',
+      city: 'Rangpur',
+      currentLat: 25.7439,
+      currentLng: 89.2752,
+      availability: Availability.AVAILABLE,
+      skills: ['Electrical', 'AC', 'Engine'],
+      yearsExperience: 7,
+      bio: 'Certified auto electrician serving Rangpur division with cutting-edge scanning tools. Experienced in repairing faulty wiring harnesses, ECU reprogramming, and AC compressor rebuilds.',
+    },
+    {
+      email: 'mechanic-8@roadresq-demo.com',
+      name: 'Nazmul Huda',
+      phone: '+8801810000007',
+      city: 'Barishal',
+      currentLat: 22.7010,
+      currentLng: 90.3535,
+      availability: Availability.BUSY,
+      skills: ['Brakes', 'Transmission', 'Battery'],
+      yearsExperience: 14,
+      bio: 'Veteran mechanic with fourteen years serving southern coastal transit fleets in Barishal. Master of automatic gearbox maintenance, hydraulic ABS brake servicing, and deep-cycle battery testing.',
+    },
+    {
+      email: 'mechanic-9@roadresq-demo.com',
+      name: 'Ashraful Haque',
+      phone: '+8801810000008',
+      city: 'Mymensingh',
+      currentLat: 24.7471,
+      currentLng: 90.4203,
+      availability: Availability.OFFLINE,
+      skills: ['Tire', 'Towing', 'Lockout'],
+      yearsExperience: 5,
+      bio: 'Rapid emergency responder specializing in flat tire mobile replacement and lockouts in Mymensingh. Committed to safe vehicle towing and round-the-clock driver assistance.',
+    },
+    {
+      email: 'mechanic-10@roadresq-demo.com',
+      name: 'Zahidul Islam',
+      phone: '+8801810000009',
+      city: 'Bogura',
+      currentLat: 24.8465,
+      currentLng: 89.3777,
+      availability: Availability.AVAILABLE,
+      skills: ['Fuel Delivery', 'Battery', 'Engine'],
+      yearsExperience: 10,
+      bio: 'Key transit corridor automotive engineer operating near the Bogura northern highway hub. Expert in emergency fuel system priming, starter motor repairs, and cooling system restorations.',
+    },
+    {
+      email: 'mechanic-11@roadresq-demo.com',
+      name: 'Mahmudur Rahman',
+      phone: '+8801810000010',
+      city: 'Gazipur',
+      currentLat: 23.9999,
+      currentLng: 90.4203,
+      availability: Availability.BUSY,
+      skills: ['Electrical', 'Brakes', 'AC'],
+      yearsExperience: 13,
+      bio: 'Highly rated mechanical engineer handling high-mileage delivery vans and personal sedans in Gazipur. Known for meticulous brake rotor resurfacing and precision automotive air conditioning repair.',
+    },
+    {
+      email: 'mechanic-12@roadresq-demo.com',
+      name: 'Anisur Rahman Khan',
+      phone: '+8801810000011',
+      city: 'Narayanganj',
+      currentLat: 23.6238,
+      currentLng: 90.5000,
+      availability: Availability.OFFLINE,
+      skills: ['Transmission', 'Engine', 'Tire'],
+      yearsExperience: 8,
+      bio: 'Skilled workshop manager and mobile mechanic serving Narayanganj river port district. Specializes in manual clutch replacements, engine valve timing, and rapid roadside puncture repairs.',
+    },
+    {
+      email: 'mechanic-13@roadresq-demo.com',
+      name: 'Farhad Hossain',
+      phone: '+8801810000012',
+      city: 'Cox\'s Bazar',
+      currentLat: 21.4272,
+      currentLng: 92.0058,
+      availability: Availability.AVAILABLE,
+      skills: ['Towing', 'Battery', 'Lockout'],
+      yearsExperience: 6,
+      bio: 'Tourist highway roadside assistance specialist based along the Marine Drive in Cox\'s Bazar. Delivers high-speed towing, jumpstarting, and key retrieval services under tough coastal conditions.',
+    },
+    {
+      email: 'mechanic-14@roadresq-demo.com',
+      name: 'Saiful Islam',
+      phone: '+8801810000013',
+      city: 'Kushtia',
+      currentLat: 23.9013,
+      currentLng: 89.1205,
+      availability: Availability.BUSY,
+      skills: ['Engine', 'Electrical', 'AC'],
+      yearsExperience: 15,
+      bio: 'Fifteen-year master mechanic trusted by local transport operators across Kushtia and Pabna districts. Renowned for rebuilding cylinder heads, diagnosing tricky electrical shorts, and AC servicing.',
+    },
+  ];
+
+  const additionalMechanicUsers: Array<{ user: any; profile: any }> = [];
+  for (const mData of additionalMechanicsData) {
+    const user = await prisma.user.upsert({
+      where: { email: mData.email },
+      update: {
+        name: mData.name,
+        role: Role.MECHANIC,
+        phone: mData.phone,
+        deletedAt: null,
+        password: passwordHash,
+      },
+      create: {
+        name: mData.name,
+        email: mData.email,
+        password: passwordHash,
+        role: Role.MECHANIC,
+        phone: mData.phone,
+      },
+    });
+
+    const profile = await prisma.mechanicProfile.upsert({
+      where: { userId: user.id },
+      update: {
+        availability: mData.availability,
+        currentLat: mData.currentLat,
+        currentLng: mData.currentLng,
+        skills: mData.skills,
+        city: mData.city,
+        yearsExperience: mData.yearsExperience,
+        bio: mData.bio,
+        avatarUrl: `https://api.dicebear.com/10.x/open-peeps/png?seed=${encodeURIComponent(mData.name)}`,
+      },
+      create: {
+        userId: user.id,
+        availability: mData.availability,
+        currentLat: mData.currentLat,
+        currentLng: mData.currentLng,
+        skills: mData.skills,
+        city: mData.city,
+        yearsExperience: mData.yearsExperience,
+        bio: mData.bio,
+        avatarUrl: `https://api.dicebear.com/10.x/open-peeps/png?seed=${encodeURIComponent(mData.name)}`,
+        rating: 5.0,
+        totalJobs: 0,
+      },
+    });
+
+    additionalMechanicUsers.push({ user, profile });
+  }
+  console.log(`✅ Seeded ${additionalMechanicsData.length} additional demo mechanics across Bangladesh`);
+
+  // 3c. Seed 10 Extra Demo Customers
+  const additionalCustomersData = [
+    { email: 'customer-1@roadresq-demo.com', name: 'Sultana Razia', phone: '+8801720000001', make: 'Toyota', model: 'Allion 2019', plate: 'DHAKA-METRO-KA-801111' },
+    { email: 'customer-2@roadresq-demo.com', name: 'Tariqul Islam', phone: '+8801720000002', make: 'Honda', model: 'Grace Hybrid', plate: 'DHAKA-METRO-GA-802222' },
+    { email: 'customer-3@roadresq-demo.com', name: 'Farhana Yasmin', phone: '+8801720000003', make: 'Nissan', model: 'X-Trail 2020', plate: 'DHAKA-METRO-CHA-803333' },
+    { email: 'customer-4@roadresq-demo.com', name: 'Imran Kabir', phone: '+8801720000004', make: 'Toyota', model: 'Axio 2018', plate: 'DHAKA-METRO-KA-804444' },
+    { email: 'customer-5@roadresq-demo.com', name: 'Nasrin Akter', phone: '+8801720000005', make: 'Hyundai', model: 'Tucson 2021', plate: 'DHAKA-METRO-GHA-805555' },
+    { email: 'customer-6@roadresq-demo.com', name: 'Sabbir Hossain', phone: '+8801720000006', make: 'Mitsubishi', model: 'Outlander', plate: 'DHAKA-METRO-JA-806666' },
+    { email: 'customer-7@roadresq-demo.com', name: 'Nusrat Jahan', phone: '+8801720000007', make: 'Suzuki', model: 'Swift 2020', plate: 'DHAKA-METRO-KHA-807777' },
+    { email: 'customer-8@roadresq-demo.com', name: 'Rashedul Karim', phone: '+8801720000008', make: 'Toyota', model: 'Prius 2019', plate: 'DHAKA-METRO-GA-808888' },
+    { email: 'customer-9@roadresq-demo.com', name: 'Farzana Haque', phone: '+8801720000009', make: 'Kia', model: 'Sportage 2022', plate: 'DHAKA-METRO-CHA-809999' },
+    { email: 'customer-10@roadresq-demo.com', name: 'Mustafizur Rahman', phone: '+8801720000010', make: 'Mazda', model: 'CX-5 2021', plate: 'DHAKA-METRO-DA-810000' },
+  ];
+
+  const seededCustomers: Array<{ user: any; vehicle: any }> = [];
+  for (const cData of additionalCustomersData) {
+    const cUser = await prisma.user.upsert({
+      where: { email: cData.email },
+      update: {
+        name: cData.name,
+        role: Role.CUSTOMER,
+        phone: cData.phone,
+        deletedAt: null,
+        password: passwordHash,
+      },
+      create: {
+        name: cData.name,
+        email: cData.email,
+        password: passwordHash,
+        role: Role.CUSTOMER,
+        phone: cData.phone,
+      },
+    });
+
+    let cVeh = await prisma.vehicle.findFirst({
+      where: { customerId: cUser.id, plateNumber: cData.plate },
+    });
+    if (!cVeh) {
+      cVeh = await prisma.vehicle.create({
+        data: {
+          customerId: cUser.id,
+          make: cData.make,
+          model: cData.model,
+          plateNumber: cData.plate,
+        },
+      });
+    }
+    seededCustomers.push({ user: cUser, vehicle: cVeh });
+  }
+  console.log(`✅ Seeded ${additionalCustomersData.length} additional demo customers with vehicles`);
 
   // 4. Seed Global Spare Parts Catalog
   const catalogPartsData = [
@@ -151,7 +421,7 @@ async function main() {
 
   // 5. Seed Mechanic Inventory (including low stock item stock <= 5)
   const inventoryItemsData = [
-    { name: 'Heavy Duty 12V Battery', price: 120.0, stock: 3 }, // Low stock item (<= LOW_STOCK_THRESHOLD = 5)
+    { name: 'Heavy Duty 12V Battery', price: 120.0, stock: 3 },
     { name: 'Brake Pad Set (Front)', price: 65.0, stock: 15 },
     { name: 'Synthetic Engine Oil 5L', price: 45.0, stock: 25 },
     { name: 'Spark Plug Set (4-Pack)', price: 35.0, stock: 10 },
@@ -278,7 +548,6 @@ async function main() {
     },
   });
 
-  // ServiceRequestPart for req4
   const batteryPart = catalogParts['Heavy Duty 12V Battery'];
   const existingPart4 = await prisma.serviceRequestPart.findFirst({
     where: { serviceRequestId: req4.id, sparePartId: batteryPart.id },
@@ -295,7 +564,6 @@ async function main() {
     });
   }
 
-  // Invoice for req4
   const inv4 = await prisma.invoice.upsert({
     where: { serviceRequestId: req4.id },
     update: {
@@ -313,7 +581,6 @@ async function main() {
     },
   });
 
-  // Payment for inv4
   await prisma.payment.upsert({
     where: { invoiceId: inv4.id },
     update: {
@@ -332,7 +599,6 @@ async function main() {
     },
   });
 
-  // Review for req4
   await prisma.review.upsert({
     where: { serviceRequestId: req4.id },
     update: {
@@ -371,7 +637,6 @@ async function main() {
     },
   });
 
-  // ServiceRequestParts for req5
   const brakePart = catalogParts['Brake Pad Set (Front)'];
   const oilPart = catalogParts['Synthetic Engine Oil 5L'];
 
@@ -405,7 +670,6 @@ async function main() {
     });
   }
 
-  // Invoice for req5
   await prisma.invoice.upsert({
     where: { serviceRequestId: req5.id },
     update: {
@@ -425,25 +689,188 @@ async function main() {
 
   console.log(`✅ 5 Service Requests seeded across last 10 weeks (PENDING, ASSIGNED, IN_PROGRESS, 2x COMPLETED)`);
 
-  // 7. Update Mechanic Rating and Job Counters
-  const reviewStats = await prisma.review.aggregate({
-    where: { serviceRequest: { mechanicId: mechanicUser.id } },
-    _avg: { rating: true },
-    _count: { rating: true },
-  });
+  // 6b. Seed 3 to 5 COMPLETED and PAID requests each for the first 10 mechanics
+  const sampleComments = [
+    'Prompt arrival within 20 minutes, swapped the battery quickly and verified the alternator output thoroughly.',
+    'Expert brake service on the roadside, very polite mechanic and explained safety considerations clearly.',
+    'Emergency tire puncture replacement on the highway shoulder. Was back driving safely in under thirty minutes.',
+    'Comprehensive engine fault code scanning and resolved sudden cold start stalling without extra hassle.',
+    'Quick emergency fuel delivery on a rainy evening. Friendly roadside communication and fair service fee.',
+    'AC refrigerant recharged and air cooling restored to factory chill in forty minutes on site.',
+    'Transmission shifting feels remarkably smooth now. Highly skilled mechanic with great attention to detail.',
+    'Unlocked vehicle door without any scratch to the door frame. Very impressed by the specialized tools.',
+    'Replaced worn alternator belt efficiently on the roadside. Great customer care and smooth digital invoice.',
+    'Very thorough safety inspection after rapid towing dispatch. Courteous attitude and reliable workmanship.',
+  ];
 
-  const completedCount = await prisma.serviceRequest.count({
-    where: { mechanicId: mechanicUser.id, status: RequestStatus.COMPLETED },
-  });
+  const first10Mechanics = [
+    { user: mechanicUser, profile: mechanicProfile },
+    ...additionalMechanicUsers.slice(0, 9),
+  ];
 
-  await prisma.mechanicProfile.update({
-    where: { id: mechanicProfile.id },
-    data: {
-      rating: reviewStats._avg.rating || 5.0,
-      totalJobs: completedCount,
-    },
-  });
-  console.log(`✅ Recalculated mechanic profile metrics (rating: ${reviewStats._avg.rating || 5.0}, totalJobs: ${completedCount})`);
+  const sparePartKeys = Object.keys(catalogParts);
+
+  for (let mIdx = 0; mIdx < first10Mechanics.length; mIdx++) {
+    const { user: mUser } = first10Mechanics[mIdx];
+    const numJobs = 3 + (mIdx % 3); // 3, 4, or 5 jobs per mechanic
+
+    for (let j = 0; j < numJobs; j++) {
+      const customerIdx = (mIdx * 3 + j) % seededCustomers.length;
+      const { user: cUser, vehicle: cVeh } = seededCustomers[customerIdx];
+      const reqId = `demo-req-mech-${mIdx + 1}-job-${j + 1}`;
+      const invId = `demo-inv-mech-${mIdx + 1}-job-${j + 1}`;
+      const payId = `demo-pay-mech-${mIdx + 1}-job-${j + 1}`;
+      const revId = `demo-rev-mech-${mIdx + 1}-job-${j + 1}`;
+
+      // Spread dates across the last ~12 weeks (between 3 and 84 days ago)
+      const daysAgo = Math.floor(3 + ((mIdx * 8 + j * 5) % 80));
+      const reqDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+
+      const partKey = sparePartKeys[(mIdx + j) % sparePartKeys.length];
+      const part = catalogParts[partKey];
+      const laborCost = new Prisma.Decimal(40 + (j * 15));
+      const partsCost = new Prisma.Decimal(50 + (j * 20));
+      const totalAmount = new Prisma.Decimal(laborCost.toNumber() + partsCost.toNumber());
+
+      const rating = 3 + ((mIdx + j) % 3); // 3, 4, or 5
+      const comment = sampleComments[(mIdx * 2 + j) % sampleComments.length];
+
+      await prisma.serviceRequest.upsert({
+        where: { id: reqId },
+        update: {
+          status: RequestStatus.COMPLETED,
+          priority: RequestPriority.NORMAL,
+          createdAt: reqDate,
+        },
+        create: {
+          id: reqId,
+          customerId: cUser.id,
+          mechanicId: mUser.id,
+          vehicleId: cVeh.id,
+          description: `Roadside breakdown service for ${cVeh.make} ${cVeh.model}: ${comment.substring(0, 45)}...`,
+          lat: 23.8103 + (mIdx * 0.05),
+          lng: 90.4125 + (j * 0.05),
+          status: RequestStatus.COMPLETED,
+          priority: RequestPriority.NORMAL,
+          createdAt: reqDate,
+        },
+      });
+
+      const existingPart = await prisma.serviceRequestPart.findFirst({
+        where: { serviceRequestId: reqId, sparePartId: part.id },
+      });
+      if (!existingPart) {
+        await prisma.serviceRequestPart.create({
+          data: {
+            serviceRequestId: reqId,
+            sparePartId: part.id,
+            quantity: 1,
+            priceAtUse: partsCost,
+            createdAt: reqDate,
+          },
+        });
+      }
+
+      const inv = await prisma.invoice.upsert({
+        where: { serviceRequestId: reqId },
+        update: {
+          status: InvoiceStatus.PAID,
+          createdAt: reqDate,
+        },
+        create: {
+          id: invId,
+          serviceRequestId: reqId,
+          laborCost,
+          partsCost,
+          totalAmount,
+          status: InvoiceStatus.PAID,
+          createdAt: reqDate,
+        },
+      });
+
+      await prisma.payment.upsert({
+        where: { invoiceId: inv.id },
+        update: {
+          status: PaymentStatus.COMPLETED,
+          paidAt: reqDate,
+        },
+        create: {
+          id: payId,
+          invoiceId: inv.id,
+          gateway: 'SSLCOMMERZ',
+          transactionId: `SSL_DEMO_SEED_M${mIdx + 1}_J${j + 1}`,
+          amount: totalAmount,
+          status: PaymentStatus.COMPLETED,
+          paidAt: reqDate,
+          createdAt: reqDate,
+        },
+      });
+
+      await prisma.review.upsert({
+        where: { serviceRequestId: reqId },
+        update: {
+          rating,
+          comment,
+          createdAt: reqDate,
+        },
+        create: {
+          id: revId,
+          serviceRequestId: reqId,
+          customerId: cUser.id,
+          rating,
+          comment,
+          createdAt: reqDate,
+        },
+      });
+
+      // Audit log entry for completed request
+      const existingAudit = await prisma.auditLog.findFirst({
+        where: { action: 'SERVICE_REQUEST_COMPLETED', entityId: reqId },
+      });
+      if (!existingAudit) {
+        await prisma.auditLog.create({
+          data: {
+            actorId: mUser.id,
+            action: 'SERVICE_REQUEST_COMPLETED',
+            entityType: 'ServiceRequest',
+            entityId: reqId,
+            metadata: {
+              completedAt: reqDate.toISOString(),
+              totalAmount: totalAmount.toString(),
+            },
+            createdAt: reqDate,
+          },
+        });
+      }
+    }
+  }
+  console.log(`✅ Seeded completed & paid requests with reviews for first 10 mechanics`);
+
+  // 7. Recalculate Rating and Job Counters for ALL mechanics
+  const allMechanicUsers = [mechanicUser, ...additionalMechanicUsers.map((m) => m.user)];
+  for (const mUser of allMechanicUsers) {
+    const reviewStats = await prisma.review.aggregate({
+      where: { serviceRequest: { mechanicId: mUser.id } },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    const completedCount = await prisma.serviceRequest.count({
+      where: { mechanicId: mUser.id, status: RequestStatus.COMPLETED },
+    });
+
+    const finalRating =
+      reviewStats._avg.rating !== null ? Math.round(reviewStats._avg.rating * 10) / 10 : 5.0;
+
+    await prisma.mechanicProfile.update({
+      where: { userId: mUser.id },
+      data: {
+        rating: finalRating,
+        totalJobs: completedCount,
+      },
+    });
+  }
+  console.log(`✅ Recalculated ratings and job counts for all ${allMechanicUsers.length} mechanics`);
 
   // 8. Log Audit Entry for Database Seeding
   await prisma.auditLog.create({
@@ -454,7 +881,13 @@ async function main() {
       entityId: 'seed-task',
       metadata: {
         timestamp: new Date().toISOString(),
-        demoAccounts: ['admin@roadresq-demo.com', 'customer@roadresq-demo.com', 'mechanic@roadresq-demo.com'],
+        demoAccounts: [
+          'admin@roadresq-demo.com',
+          'customer@roadresq-demo.com',
+          'mechanic@roadresq-demo.com',
+          ...additionalMechanicsData.map((m) => m.email),
+          ...additionalCustomersData.map((c) => c.email),
+        ],
       },
     },
   });

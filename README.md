@@ -222,12 +222,13 @@ src/
 
 The complete REST API postman collection is available at [`RoadResQ.postman_collection.json`](./RoadResQ.postman_collection.json).
 
-### Endpoint Overview (Total 52 Registered Endpoints)
+### Endpoint Overview (Total 56 Registered Endpoints)
 
 | Module | Base Path | Total Endpoints | Description |
 | :--- | :--- | :---: | :--- |
 | **System & Health** | `/api/v1/health` | 2 | API welcome root and system health check status. |
 | **Authentication** | `/api/v1/auth` | 4 | User registration, login, refresh token rotation, and logout. |
+| **Public Directory** | `/public` / `/api/v1/public` | 4 | Public (no auth) read-only directory: mechanics directory with search, filtering, and dynamic facets, full mechanic profiles with reviews & related mechanics, platform KPI stats, and recent customer reviews. |
 | **Users** | `/api/v1/users` | 2 | Authenticated user profile retrieval and update (`/me`). |
 | **Vehicles** | `/api/v1/vehicles` | 5 | Customer vehicle registration, listing, retrieval, update, and soft delete. |
 | **Mechanics** | `/api/v1/mechanics` | 4 | Mechanic availability updates, location tracking, earnings summary (`/me/earnings`), and mechanic reviews list. |

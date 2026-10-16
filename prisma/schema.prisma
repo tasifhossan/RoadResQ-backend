@@ -79,15 +79,19 @@ model User {
 }
 
 model MechanicProfile {
-  id           String          @id @default(cuid())
-  userId       String          @unique
-  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  skills       String[]
-  currentLat   Float?
-  currentLng   Float?
-  availability Availability    @default(OFFLINE)
-  rating       Float           @default(0)
-  totalJobs    Int             @default(0)
+  id              String             @id @default(cuid())
+  userId          String             @unique
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills          String[]
+  bio             String?
+  avatarUrl       String?
+  city            String?
+  yearsExperience Int?
+  currentLat      Float?
+  currentLng      Float?
+  availability    Availability       @default(OFFLINE)
+  rating          Float              @default(0)
+  totalJobs       Int                @default(0)
 
   locationUpdates LocationUpdate[]
   inventory       MechanicInventory[]
