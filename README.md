@@ -158,10 +158,16 @@ SSLCOMMERZ_FAIL_URL="https://road-res-q-backend.vercel.app/api/v1/payments/fail"
 SSLCOMMERZ_CANCEL_URL="https://road-res-q-backend.vercel.app/api/v1/payments/cancel"
 ```
 
-### 4. Run Prisma Database Migrations
-```bash
-npx prisma migrate deploy
-```
+### 4. Database Setup & Migrations
+- **Fresh Database Setup**: For setting up a new/fresh database instance, use:
+  ```bash
+  npx prisma db push
+  ```
+  The Prisma schema file (`prisma/schema.prisma`) serves as the comprehensive source of truth for the database architecture.
+- **Migration Tracking**: Early migration folders prior to October 2026 were not committed to the repository; migrations from `20261016` onward are tracked under `prisma/migrations/`. For existing deployed databases, run:
+  ```bash
+  npx prisma migrate deploy
+  ```
 
 ### 5. Seed Initial Database Data
 Execute the database seed script to generate initial users, vehicles, global spare parts catalog, and mechanic inventory:
