@@ -7,6 +7,8 @@ import { PublicService } from './public.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
 
+const PUBLIC_CACHE_CONTROL = 'public, s-maxage=60, stale-while-revalidate=300';
+
 const getMechanics = async (
   req: Request,
   res: Response,
@@ -27,6 +29,7 @@ const getMechanics = async (
 
     const result = await PublicService.getPublicMechanics(parsedQuery.data);
 
+    res.setHeader('Cache-Control', PUBLIC_CACHE_CONTROL);
     sendResponse(res, {
       statusCode: 200,
       success: true,
@@ -47,6 +50,7 @@ const getMechanicById = async (
     const { id } = req.params;
     const result = await PublicService.getPublicMechanicById(id);
 
+    res.setHeader('Cache-Control', PUBLIC_CACHE_CONTROL);
     sendResponse(res, {
       statusCode: 200,
       success: true,
@@ -69,6 +73,7 @@ const getStats = async (
   try {
     const result = await PublicService.getPublicStats();
 
+    res.setHeader('Cache-Control', PUBLIC_CACHE_CONTROL);
     sendResponse(res, {
       statusCode: 200,
       success: true,
@@ -100,6 +105,7 @@ const getReviews = async (
 
     const reviews = await PublicService.getPublicReviews(parsedQuery.data);
 
+    res.setHeader('Cache-Control', PUBLIC_CACHE_CONTROL);
     sendResponse(res, {
       statusCode: 200,
       success: true,

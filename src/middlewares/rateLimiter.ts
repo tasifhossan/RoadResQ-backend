@@ -90,10 +90,29 @@ export const refreshTokenLimiter = rateLimit({
 export const authLimiter = loginLimiter;
 
 /**
+ * Rate limiter for /public/* endpoints.
+ * Allows 600 requests per IP per 15-minute window for SSR egress traffic.
+ */
+export const publicLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 600, // 600 requests per IP per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => ipKeyGenerator(req.ip || ''),
+  handler: (_req: Request, res: Response) => {
+    sendResponse(res, {
+      statusCode: 429,
+      success: false,
+      message: 'Too many attempts, please try again later',
+    });
+  },
+});
+
+/**
  * Global API rate limiter.
  * - Authenticated requests (valid JWT): keyed by user ID, limit = 1000 per 15 mins.
  * - Unauthenticated requests: keyed by IP, limit = 100 per 15 mins.
- * - Payment callbacks (SSLCommerz) are skipped.
+ * - Payment callbacks (SSLCommerz) and public endpoints (/public) are skipped.
  */
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -115,7 +134,8 @@ export const generalLimiter = rateLimit({
     return (
       path.includes('/payments/success') ||
       path.includes('/payments/fail') ||
-      path.includes('/payments/cancel')
+      path.includes('/payments/cancel') ||
+      path.includes('/public')
     );
   },
   handler: (_req: Request, res: Response) => {

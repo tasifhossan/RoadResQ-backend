@@ -16,7 +16,7 @@ import { invoiceRoutes } from './modules/invoices/invoice.route.js';
 import { paymentRoutes } from './modules/payments/payment.route.js';
 import { adminRoutes } from './modules/admin/admin.route.js';
 import { publicRoutes } from './modules/public/public.route.js';
-import { generalLimiter } from './middlewares/rateLimiter.js';
+import { generalLimiter, publicLimiter } from './middlewares/rateLimiter.js';
 import { env } from './config/env.js';
 
 const app: Application = express();
@@ -44,6 +44,8 @@ app.use(
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/public', publicLimiter);
+app.use('/api/v1/public', publicLimiter);
 app.use(generalLimiter);
 
 // Welcome route
