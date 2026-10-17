@@ -84,6 +84,7 @@ app.use('/api/v1/spare-parts', sparePartRoutes);
 app.use('/api/v1/invoices', invoiceRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/admin', adminRoutes);
 app.use('/api/v1/public', publicRoutes);
 app.use('/public', publicRoutes);
 

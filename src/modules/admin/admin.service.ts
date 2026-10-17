@@ -1,7 +1,12 @@
 import { Availability, InvoiceStatus, Prisma, RequestStatus, Role } from '@prisma/client';
 import { prisma } from '../../config/db.js';
 import { buildPaginatedResponse } from '../../utils/pagination.js';
-import { GetUsersQueryInput, GetAuditLogsQueryInput } from './admin.validation.js';
+import {
+  GetUsersQueryInput,
+  GetAuditLogsQueryInput,
+  GetServiceRequestsQueryInput,
+  GetPaymentsQueryInput,
+} from './admin.validation.js';
 
 export const getAllUsers = async (options: Partial<GetUsersQueryInput> = {}) => {
   const page = options.page ?? 1;
@@ -456,6 +461,174 @@ export const getAuditLogs = async (options: Partial<GetAuditLogsQueryInput> = {}
   return buildPaginatedResponse(result, total, page, limit);
 };
 
+export const getServiceRequests = async (
+  options: Partial<GetServiceRequestsQueryInput> = {}
+) => {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 10;
+  const skip = (page - 1) * limit;
+  const sortBy = options.sortBy ?? 'createdAt';
+  const sortOrder = options.sortOrder ?? 'desc';
+
+  const whereClause: Prisma.ServiceRequestWhereInput = {
+    ...(options.status ? { status: options.status } : {}),
+    ...(options.priority ? { priority: options.priority } : {}),
+    ...(options.from || options.to
+      ? {
+          createdAt: {
+            ...(options.from ? { gte: new Date(options.from) } : {}),
+            ...(options.to ? { lte: new Date(options.to) } : {}),
+          },
+        }
+      : {}),
+    ...(options.search && options.search.trim()
+      ? {
+          OR: [
+            { customer: { name: { contains: options.search.trim(), mode: 'insensitive' } } },
+            { mechanic: { name: { contains: options.search.trim(), mode: 'insensitive' } } },
+            { vehicle: { plateNumber: { contains: options.search.trim(), mode: 'insensitive' } } },
+          ],
+        }
+      : {}),
+  };
+
+  const [total, rawRequests] = await Promise.all([
+    prisma.serviceRequest.count({ where: whereClause }),
+    prisma.serviceRequest.findMany({
+      where: whereClause,
+      skip,
+      take: limit,
+      orderBy: { [sortBy]: sortOrder },
+      select: {
+        id: true,
+        status: true,
+        priority: true,
+        createdAt: true,
+        customer: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        mechanic: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        vehicle: {
+          select: {
+            make: true,
+            model: true,
+            plateNumber: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  const items = rawRequests.map((r) => ({
+    id: r.id,
+    status: r.status,
+    priority: r.priority,
+    createdAt: r.createdAt,
+    customer: {
+      id: r.customer.id,
+      name: r.customer.name,
+    },
+    mechanic: r.mechanic
+      ? {
+          id: r.mechanic.id,
+          name: r.mechanic.name,
+        }
+      : null,
+    vehicle: r.vehicle
+      ? {
+          make: r.vehicle.make,
+          model: r.vehicle.model,
+          plateNumber: r.vehicle.plateNumber,
+        }
+      : null,
+  }));
+
+  return buildPaginatedResponse(items, total, page, limit);
+};
+
+export const getPayments = async (
+  options: Partial<GetPaymentsQueryInput> = {}
+) => {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 10;
+  const skip = (page - 1) * limit;
+  const sortBy = options.sortBy ?? 'createdAt';
+  const sortOrder = options.sortOrder ?? 'desc';
+
+  const whereClause: Prisma.PaymentWhereInput = {
+    ...(options.status ? { status: options.status } : {}),
+    ...(options.from || options.to
+      ? {
+          createdAt: {
+            ...(options.from ? { gte: new Date(options.from) } : {}),
+            ...(options.to ? { lte: new Date(options.to) } : {}),
+          },
+        }
+      : {}),
+  };
+
+  const [total, rawPayments] = await Promise.all([
+    prisma.payment.count({ where: whereClause }),
+    prisma.payment.findMany({
+      where: whereClause,
+      skip,
+      take: limit,
+      orderBy: { [sortBy]: sortOrder },
+      select: {
+        id: true,
+        amount: true,
+        status: true,
+        paidAt: true,
+        createdAt: true,
+        invoice: {
+          select: {
+            id: true,
+            totalAmount: true,
+            serviceRequest: {
+              select: {
+                id: true,
+                customer: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }),
+  ]);
+
+  const items = rawPayments.map((p) => ({
+    id: p.id,
+    amount: p.amount,
+    status: p.status,
+    paidAt: p.paidAt,
+    createdAt: p.createdAt,
+    invoice: {
+      id: p.invoice.id,
+      total: p.invoice.totalAmount,
+    },
+    serviceRequest: {
+      id: p.invoice.serviceRequest.id,
+    },
+    customer: {
+      name: p.invoice.serviceRequest.customer.name,
+    },
+  }));
+
+  return buildPaginatedResponse(items, total, page, limit);
+};
+
 export const AdminService = {
   getAllUsers,
   updateUserRole,
@@ -463,4 +636,6 @@ export const AdminService = {
   reactivateUser,
   getDashboardStats,
   getAuditLogs,
+  getServiceRequests,
+  getPayments,
 };

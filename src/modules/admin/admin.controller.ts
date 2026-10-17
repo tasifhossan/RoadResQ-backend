@@ -161,6 +161,68 @@ const getAuditLogs = async (
   }
 };
 
+const getServiceRequests = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const parsedQuery = AdminValidation.getServiceRequestsQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsedQuery.error),
+      });
+      return;
+    }
+
+    const result = await AdminService.getServiceRequests(parsedQuery.data);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Service requests retrieved successfully',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getPayments = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const parsedQuery = AdminValidation.getPaymentsQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsedQuery.error),
+      });
+      return;
+    }
+
+    const result = await AdminService.getPayments(parsedQuery.data);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Payments retrieved successfully',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const AdminController = {
   getAllUsers,
   updateUserRole,
@@ -168,4 +230,6 @@ export const AdminController = {
   reactivateUser,
   getDashboardStats,
   getAuditLogs,
+  getServiceRequests,
+  getPayments,
 };
