@@ -2159,6 +2159,34 @@
       "response": []
     },
     {
+      "name": "Get Admin Insights",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/insights",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "insights"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "Get Audit Logs",
       "request": {
         "auth": {

@@ -130,6 +130,39 @@ const getDashboardStats = async (
   }
 };
 
+const getInsights = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const parsedQuery = AdminValidation.getInsightsQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsedQuery.error),
+      });
+      return;
+    }
+
+    res.setHeader('Cache-Control', 'private, no-store');
+
+    const result = await AdminService.getInsights();
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Admin insights retrieved successfully',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getAuditLogs = async (
   req: Request,
   res: Response,
@@ -229,6 +262,7 @@ export const AdminController = {
   deactivateUser,
   reactivateUser,
   getDashboardStats,
+  getInsights,
   getAuditLogs,
   getServiceRequests,
   getPayments,

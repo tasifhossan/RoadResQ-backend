@@ -1,6 +1,15 @@
-import { Availability, InvoiceStatus, Prisma, RequestStatus, Role } from '@prisma/client';
+import {
+  Availability,
+  InvoiceStatus,
+  PaymentStatus,
+  Prisma,
+  RequestPriority,
+  RequestStatus,
+  Role,
+} from '@prisma/client';
 import { prisma } from '../../config/db.js';
 import { buildPaginatedResponse } from '../../utils/pagination.js';
+import { LOW_STOCK_THRESHOLD } from '../mechanic-inventory/mechanic-inventory.service.js';
 import {
   GetUsersQueryInput,
   GetAuditLogsQueryInput,
@@ -629,12 +638,370 @@ export const getPayments = async (
   return buildPaginatedResponse(items, total, page, limit);
 };
 
+export const getInsights = async () => {
+  const now = new Date();
+  const last14DaysStart = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+  const previous14DaysStart = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
+  const hours24Ago = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const hours48Ago = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+
+  // 1. Requests metrics
+  const [
+    reqLast14,
+    reqPrev14,
+    completedLast14,
+    cancelledLast14,
+  ] = await Promise.all([
+    prisma.serviceRequest.count({
+      where: { createdAt: { gte: last14DaysStart, lte: now } },
+    }),
+    prisma.serviceRequest.count({
+      where: { createdAt: { gte: previous14DaysStart, lt: last14DaysStart } },
+    }),
+    prisma.serviceRequest.count({
+      where: {
+        createdAt: { gte: last14DaysStart, lte: now },
+        status: RequestStatus.COMPLETED,
+      },
+    }),
+    prisma.serviceRequest.count({
+      where: {
+        createdAt: { gte: last14DaysStart, lte: now },
+        status: RequestStatus.CANCELLED,
+      },
+    }),
+  ]);
+
+  const changePct =
+    reqPrev14 === 0
+      ? reqLast14 > 0
+        ? 100
+        : 0
+      : Number((((reqLast14 - reqPrev14) / reqPrev14) * 100).toFixed(2));
+
+  const completionRate =
+    reqLast14 === 0 ? 0 : Number((completedLast14 / reqLast14).toFixed(2));
+  const cancellationRate =
+    reqLast14 === 0 ? 0 : Number((cancelledLast14 / reqLast14).toFixed(2));
+
+  // 2. Revenue metrics from PAID payments
+  const [revLast14Aggregate, revPrev14Aggregate] = await Promise.all([
+    prisma.payment.aggregate({
+      where: {
+        status: PaymentStatus.COMPLETED,
+        createdAt: { gte: last14DaysStart, lte: now },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.payment.aggregate({
+      where: {
+        status: PaymentStatus.COMPLETED,
+        createdAt: { gte: previous14DaysStart, lt: last14DaysStart },
+      },
+      _sum: { amount: true },
+    }),
+  ]);
+
+  const revenueLast14 = (
+    revLast14Aggregate._sum.amount ? Number(revLast14Aggregate._sum.amount) : 0
+  ).toFixed(2);
+  const revenuePrev14 = (
+    revPrev14Aggregate._sum.amount ? Number(revPrev14Aggregate._sum.amount) : 0
+  ).toFixed(2);
+
+  // 3. Rating metrics
+  const [ratLast14Aggregate, ratPrev14Aggregate] = await Promise.all([
+    prisma.review.aggregate({
+      where: { createdAt: { gte: last14DaysStart, lte: now } },
+      _avg: { rating: true },
+    }),
+    prisma.review.aggregate({
+      where: { createdAt: { gte: previous14DaysStart, lt: last14DaysStart } },
+      _avg: { rating: true },
+    }),
+  ]);
+
+  const ratingLast14 =
+    ratLast14Aggregate._avg.rating !== null
+      ? Number(ratLast14Aggregate._avg.rating.toFixed(2))
+      : null;
+  const ratingPrev14 =
+    ratPrev14Aggregate._avg.rating !== null
+      ? Number(ratPrev14Aggregate._avg.rating.toFixed(2))
+      : null;
+
+  // 4. Daily requests & anomalies (30 days zero-filled)
+  const rawDailyRequests = await prisma.$queryRaw<
+    Array<{
+      date: string;
+      count: number | bigint;
+    }>
+  >`
+    WITH days AS (
+      SELECT to_char(d, 'YYYY-MM-DD') AS date,
+             d::date AS day_start
+      FROM generate_series(
+        CURRENT_DATE - INTERVAL '29 days',
+        CURRENT_DATE,
+        INTERVAL '1 day'
+      ) AS d
+    )
+    SELECT 
+      days.date,
+      COUNT(sr.id)::int AS count
+    FROM days
+    LEFT JOIN "ServiceRequest" sr ON to_char(sr."createdAt", 'YYYY-MM-DD') = days.date
+    GROUP BY days.date, days.day_start
+    ORDER BY days.day_start ASC;
+  `;
+
+  const dailyRequests = rawDailyRequests.map((r) => ({
+    date: r.date,
+    count: Number(r.count),
+  }));
+
+  const n = dailyRequests.length;
+  const sumCounts = dailyRequests.reduce((acc, d) => acc + d.count, 0);
+  const mean = n > 0 ? sumCounts / n : 0;
+  const variance =
+    n > 0
+      ? dailyRequests.reduce((acc, d) => acc + Math.pow(d.count - mean, 2), 0) / n
+      : 0;
+  const stdDev = Math.sqrt(variance);
+
+  const anomalies: Array<{ date: string; count: number; zScore: number }> = [];
+  if (stdDev > 0) {
+    for (const d of dailyRequests) {
+      if (d.count >= 3) {
+        const z = (d.count - mean) / stdDev;
+        if (z >= 2) {
+          anomalies.push({
+            date: d.date,
+            count: d.count,
+            zScore: Number(z.toFixed(2)),
+          });
+        }
+      }
+    }
+  }
+
+  // 5. Stuck requests
+  const [
+    assignedCount,
+    assignedOldest,
+    openCount,
+    openOldest,
+    inProgressCount,
+    inProgressOldest,
+  ] = await Promise.all([
+    prisma.serviceRequest.count({
+      where: {
+        status: RequestStatus.ASSIGNED,
+        updatedAt: { lte: hours24Ago },
+      },
+    }),
+    prisma.serviceRequest.findFirst({
+      where: {
+        status: RequestStatus.ASSIGNED,
+        updatedAt: { lte: hours24Ago },
+      },
+      orderBy: { updatedAt: 'asc' },
+      select: { updatedAt: true },
+    }),
+    prisma.serviceRequest.count({
+      where: {
+        status: { in: [RequestStatus.PENDING, RequestStatus.SEARCHING] },
+        updatedAt: { lte: hours24Ago },
+      },
+    }),
+    prisma.serviceRequest.findFirst({
+      where: {
+        status: { in: [RequestStatus.PENDING, RequestStatus.SEARCHING] },
+        updatedAt: { lte: hours24Ago },
+      },
+      orderBy: { updatedAt: 'asc' },
+      select: { updatedAt: true },
+    }),
+    prisma.serviceRequest.count({
+      where: {
+        status: RequestStatus.IN_PROGRESS,
+        updatedAt: { lte: hours48Ago },
+      },
+    }),
+    prisma.serviceRequest.findFirst({
+      where: {
+        status: RequestStatus.IN_PROGRESS,
+        updatedAt: { lte: hours48Ago },
+      },
+      orderBy: { updatedAt: 'asc' },
+      select: { updatedAt: true },
+    }),
+  ]);
+
+  // 6. Unpaid invoices for COMPLETED requests
+  const unpaidInvoicesList = await prisma.invoice.findMany({
+    where: {
+      serviceRequest: { status: RequestStatus.COMPLETED },
+      status: { not: InvoiceStatus.PAID },
+    },
+    select: { totalAmount: true },
+  });
+
+  const unpaidCount = unpaidInvoicesList.length;
+  const unpaidTotalAmount = unpaidInvoicesList
+    .reduce((sum, inv) => sum + Number(inv.totalAmount), 0)
+    .toFixed(2);
+
+  // 7. Mechanics
+  const [
+    availableMechanics,
+    busyMechanics,
+    offlineMechanics,
+    topByCompleted30dRaw,
+    lowRatedRaw,
+  ] = await Promise.all([
+    prisma.mechanicProfile.count({
+      where: {
+        availability: Availability.AVAILABLE,
+        user: { deletedAt: null },
+      },
+    }),
+    prisma.mechanicProfile.count({
+      where: {
+        availability: Availability.BUSY,
+        user: { deletedAt: null },
+      },
+    }),
+    prisma.mechanicProfile.count({
+      where: {
+        availability: Availability.OFFLINE,
+        user: { deletedAt: null },
+      },
+    }),
+    prisma.$queryRaw<Array<{ name: string; completed: number | bigint }>>`
+      SELECT 
+        u.name,
+        COUNT(sr.id)::int AS completed
+      FROM "ServiceRequest" sr
+      JOIN "User" u ON u.id = sr."mechanicId"
+      WHERE sr.status = 'COMPLETED'
+        AND sr."createdAt" >= NOW() - INTERVAL '30 days'
+        AND u."deletedAt" IS NULL
+      GROUP BY u.id, u.name
+      ORDER BY completed DESC
+      LIMIT 3;
+    `,
+    prisma.$queryRaw<
+      Array<{
+        name: string;
+        averageRating: number | string;
+        reviewCount: number | bigint;
+      }>
+    >`
+      SELECT 
+        u.name,
+        ROUND(AVG(r.rating)::numeric, 2)::float AS "averageRating",
+        COUNT(r.id)::int AS "reviewCount"
+      FROM "Review" r
+      JOIN "ServiceRequest" sr ON sr.id = r."serviceRequestId"
+      JOIN "User" u ON u.id = sr."mechanicId"
+      WHERE u."deletedAt" IS NULL
+      GROUP BY u.id, u.name
+      HAVING COUNT(r.id) >= 3 AND AVG(r.rating) < 3.5
+      ORDER BY "averageRating" ASC;
+    `,
+  ]);
+
+  const topByCompleted30d = topByCompleted30dRaw.map((m) => ({
+    name: m.name,
+    completed: Number(m.completed),
+  }));
+
+  const lowRated = lowRatedRaw.map((m) => ({
+    name: m.name,
+    averageRating: Number(m.averageRating),
+    reviewCount: Number(m.reviewCount),
+  }));
+
+  // 8. Open requests by priority
+  const openRequestsByPriority = await prisma.serviceRequest.groupBy({
+    by: ['priority'],
+    where: {
+      status: { notIn: [RequestStatus.COMPLETED, RequestStatus.CANCELLED] },
+    },
+    _count: { priority: true },
+  });
+
+  const openByPriority = Object.values(RequestPriority).reduce(
+    (acc, priority) => {
+      const found = openRequestsByPriority.find((item) => item.priority === priority);
+      acc[priority] = found ? found._count.priority : 0;
+      return acc;
+    },
+    {} as Record<RequestPriority, number>
+  );
+
+  // 9. Low stock items
+  const lowStockItems = await prisma.mechanicInventory.count({
+    where: { stock: { lte: LOW_STOCK_THRESHOLD } },
+  });
+
+  return {
+    generatedAt: now.toISOString(),
+    requests: {
+      last14Days: reqLast14,
+      previous14Days: reqPrev14,
+      changePct,
+      completionRate,
+      cancellationRate,
+    },
+    revenue: {
+      last14Days: revenueLast14,
+      previous14Days: revenuePrev14,
+    },
+    rating: {
+      last14Days: ratingLast14,
+      previous14Days: ratingPrev14,
+    },
+    dailyRequests,
+    anomalies,
+    stuck: {
+      assignedOver24h: {
+        count: assignedCount,
+        oldestAt: assignedOldest?.updatedAt ? assignedOldest.updatedAt.toISOString() : null,
+      },
+      openOver24h: {
+        count: openCount,
+        oldestAt: openOldest?.updatedAt ? openOldest.updatedAt.toISOString() : null,
+      },
+      inProgressOver48h: {
+        count: inProgressCount,
+        oldestAt: inProgressOldest?.updatedAt ? inProgressOldest.updatedAt.toISOString() : null,
+      },
+    },
+    unpaidInvoices: {
+      count: unpaidCount,
+      totalAmount: unpaidTotalAmount,
+    },
+    mechanics: {
+      available: availableMechanics,
+      busy: busyMechanics,
+      offline: offlineMechanics,
+      topByCompleted30d,
+      lowRated,
+    },
+    openByPriority,
+    lowStockItems,
+  };
+};
+
 export const AdminService = {
   getAllUsers,
   updateUserRole,
   deactivateUser,
   reactivateUser,
   getDashboardStats,
+  getInsights,
   getAuditLogs,
   getServiceRequests,
   getPayments,

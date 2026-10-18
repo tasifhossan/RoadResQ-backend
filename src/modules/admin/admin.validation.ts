@@ -67,10 +67,15 @@ const getPaymentsQuerySchema = z
 
 export type GetPaymentsQueryInput = z.infer<typeof getPaymentsQuerySchema>;
 
+const getInsightsQuerySchema = z.object({}).strict();
+
+export type GetInsightsQueryInput = z.infer<typeof getInsightsQuerySchema>;
+
 export const AdminValidation = {
   updateUserRoleSchema,
   getUsersQuerySchema,
   getAuditLogsQuerySchema,
   getServiceRequestsQuerySchema,
   getPaymentsQuerySchema,
+  getInsightsQuerySchema,
 };

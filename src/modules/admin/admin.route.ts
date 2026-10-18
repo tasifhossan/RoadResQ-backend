@@ -17,6 +17,7 @@ adminRoutes.patch('/users/:id/reactivate', AdminController.reactivateUser);
 
 // Dashboard Statistics & Audit Logs
 adminRoutes.get('/dashboard-stats', AdminController.getDashboardStats);
+adminRoutes.get('/insights', AdminController.getInsights);
 adminRoutes.get('/audit-logs', AdminController.getAuditLogs);
 
 // Service Requests & Payments Management
