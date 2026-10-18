@@ -47,6 +47,27 @@ export const loginLimiter = rateLimit({
 });
 
 /**
+ * Rate limiter for POST /auth/google.
+ * Allows 10 failed attempts per 15-minute window per IP.
+ * Successful sign-ins do not count against the limit (skipSuccessfulRequests: true).
+ */
+export const googleAuthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 10, // 10 failed attempts per window
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => ipKeyGenerator(req.ip || ''),
+  handler: (_req: Request, res: Response) => {
+    sendResponse(res, {
+      statusCode: 429,
+      success: false,
+      message: 'Too many attempts, please try again later',
+    });
+  },
+});
+
+/**
  * Rate limiter for POST /auth/register.
  * Allows 20 requests per IP per 15-minute window.
  */

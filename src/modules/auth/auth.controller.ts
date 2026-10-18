@@ -1,6 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
-import { loginSchema, registerSchema, refreshTokenSchema } from './auth.validation.js';
-import { loginUser, registerUser, refreshAccessToken, logoutUser } from './auth.service.js';
+import {
+  loginSchema,
+  registerSchema,
+  refreshTokenSchema,
+  googleAuthSchema,
+} from './auth.validation.js';
+import {
+  loginUser,
+  registerUser,
+  refreshAccessToken,
+  logoutUser,
+  signInWithGoogle,
+} from './auth.service.js';
+import { env } from '../../config/env.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
 
@@ -47,6 +59,42 @@ const login = async (req: Request, res: Response, next: NextFunction): Promise<v
     }
 
     const result = await loginUser(parsed.data);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Login successful',
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const googleSignIn = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!env.googleClientId || env.googleClientId.trim().length === 0) {
+      sendResponse(res, {
+        statusCode: 503,
+        success: false,
+        message: 'Google sign-in is not configured',
+      });
+      return;
+    }
+
+    const parsed = googleAuthSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsed.error),
+      });
+      return;
+    }
+
+    const result = await signInWithGoogle(parsed.data.idToken);
 
     sendResponse(res, {
       statusCode: 200,
@@ -115,6 +163,7 @@ const logoutHandler = async (
 export const AuthController = {
   register,
   login,
+  googleSignIn,
   refreshToken: refreshTokenHandler,
   logout: logoutHandler,
 };

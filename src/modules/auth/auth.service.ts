@@ -1,6 +1,8 @@
 import crypto from 'crypto';
 import { Role } from '@prisma/client';
+import { OAuth2Client } from 'google-auth-library';
 import { prisma } from '../../config/db.js';
+import { env } from '../../config/env.js';
 import { comparePassword, hashPassword } from '../../utils/hashPassword.js';
 import {
   generateAccessToken,
@@ -8,6 +10,8 @@ import {
   verifyRefreshToken,
 } from '../../utils/jwt.js';
 import { LoginInput, RegisterInput } from './auth.validation.js';
+
+export const oauth2Client = new OAuth2Client();
 
 /**
  * Hashes a raw JWT refresh token using SHA-256 for secure database storage.
@@ -233,6 +237,115 @@ export const logoutUser = async (userId: string, tokenStr?: string) => {
       where: { userId },
     });
   }
+};
+
+/**
+ * Authenticates or registers a user via Google ID token.
+ * Validates token with Google OAuth2Client, enforces role/deactivation checks,
+ * creates customer if user does not exist, and returns JWT access + refresh tokens.
+ */
+export const signInWithGoogle = async (idToken: string) => {
+  if (!env.googleClientId || env.googleClientId.trim().length === 0) {
+    const err = new Error('Google sign-in is not configured') as Error & {
+      statusCode: number;
+    };
+    err.statusCode = 503;
+    throw err;
+  }
+
+  let ticket;
+  try {
+    ticket = await oauth2Client.verifyIdToken({
+      idToken,
+      audience: env.googleClientId,
+    });
+  } catch (error: any) {
+    const err = new Error(
+      error?.message || 'Invalid or expired Google token'
+    ) as Error & { statusCode: number };
+    err.statusCode = 401;
+    throw err;
+  }
+
+  const payload = ticket?.getPayload();
+  if (!payload || !payload.email || payload.email_verified !== true) {
+    const err = new Error('Google account email is not verified') as Error & {
+      statusCode: number;
+    };
+    err.statusCode = 401;
+    throw err;
+  }
+
+  const email = payload.email.trim().toLowerCase();
+
+  let user = await prisma.user.findFirst({
+    where: { email },
+  });
+
+  if (user) {
+    if (user.deletedAt) {
+      const err = new Error('Account deactivated') as Error & { statusCode: number };
+      err.statusCode = 403;
+      throw err;
+    }
+
+    if (user.role === Role.ADMIN) {
+      const err = new Error('Admin accounts cannot use Google sign-in') as Error & {
+        statusCode: number;
+      };
+      err.statusCode = 403;
+      throw err;
+    }
+  } else {
+    const fallbackLocalPart = email.split('@')[0] || 'User';
+    const rawName =
+      payload.name && payload.name.trim().length > 0 ? payload.name.trim() : fallbackLocalPart;
+    const name = rawName.slice(0, 100);
+
+    const randomPassword = crypto.randomBytes(24).toString('hex');
+    const hashedPassword = await hashPassword(randomPassword);
+
+    user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: Role.CUSTOMER,
+        phone: null,
+      },
+    });
+  }
+
+  const tokenPayload = {
+    id: user.id,
+    role: user.role,
+    email: user.email,
+  };
+
+  const accessToken = generateAccessToken(tokenPayload);
+  const refreshToken = generateRefreshToken(tokenPayload);
+  const hashedRefreshToken = hashToken(refreshToken);
+
+  // Store SHA-256 hash of refresh token in database (expires in 7 days)
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
+  await prisma.refreshToken.create({
+    data: {
+      token: hashedRefreshToken,
+      userId: user.id,
+      expiresAt,
+    },
+  });
+
+  const userObj = { ...user };
+  delete (userObj as { password?: string }).password;
+
+  return {
+    user: userObj,
+    accessToken,
+    refreshToken,
+  };
 };
 
 

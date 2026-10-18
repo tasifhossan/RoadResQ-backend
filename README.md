@@ -44,6 +44,7 @@ RoadResQ is a robust, production-ready, backend-only REST API (built without a f
 ## Key Features
 
 - 🔐 **JWT Authentication & Token Rotation**: Secure register/login flows with short-lived Access Tokens (`15m`) and long-lived Refresh Tokens (`7d`) stored securely using SHA-256 hashes in the database with rotation on refresh and logout revocation.
+- 🌐 **Google Sign-In with ID Token Verification**: Seamless Google authentication (`POST /api/v1/auth/google`) using `google-auth-library`. Verifies ID token signature and audience, requires verified email, blocks deactivated accounts and admins, auto-provisions `CUSTOMER` accounts with randomized credentials, and issues standard JWT token pairs.
 - 🛡️ **Role-Based Access Control (RBAC)**: Fine-grained authorization middleware supporting three distinct user roles: `CUSTOMER`, `MECHANIC`, and `ADMIN`.
 - 🚘 **Vehicle Management**: Full CRUD operations for customer vehicles (`make`, `model`, `plateNumber`) with soft delete filtering (`deletedAt`).
 - 📍 **Mechanic Live Location & Availability**: Mechanics can dynamically update their real-time coordinates and availability states (`AVAILABLE`, `BUSY`, `OFFLINE`).
@@ -86,11 +87,16 @@ RoadResQ is a robust, production-ready, backend-only REST API (built without a f
 "dependencies": {
   "@prisma/client": "^5.22.0",
   "bcrypt": "^6.0.0",
+  "cloudinary": "^1.41.3",
   "cors": "^2.8.5",
   "dotenv": "^16.4.5",
   "express": "^4.21.1",
+  "express-rate-limit": "^8.7.0",
+  "google-auth-library": "^9.15.1",
   "helmet": "^8.0.0",
   "jsonwebtoken": "^9.0.3",
+  "multer": "^2.3.0",
+  "multer-storage-cloudinary": "^4.0.0",
   "zod": "^4.5.4"
 }
 ```
@@ -102,6 +108,7 @@ RoadResQ is a robust, production-ready, backend-only REST API (built without a f
   "@types/cors": "^2.8.17",
   "@types/express": "^5.0.0",
   "@types/jsonwebtoken": "^9.0.10",
+  "@types/multer": "^2.2.0",
   "@types/node": "^22.9.0",
   "@typescript-eslint/eslint-plugin": "^8.14.0",
   "@typescript-eslint/parser": "^8.14.0",
@@ -156,9 +163,31 @@ SSLCOMMERZ_IS_LIVE="false"
 SSLCOMMERZ_SUCCESS_URL="https://road-res-q-backend.vercel.app/api/v1/payments/success"
 SSLCOMMERZ_FAIL_URL="https://road-res-q-backend.vercel.app/api/v1/payments/fail"
 SSLCOMMERZ_CANCEL_URL="https://road-res-q-backend.vercel.app/api/v1/payments/cancel"
+
+# Google Authentication
+GOOGLE_CLIENT_ID="your_google_client_id.apps.googleusercontent.com"
 ```
 
-### 4. Database Setup & Migrations
+### 4. Google Cloud Console Setup (OAuth 2.0)
+To configure Google Sign-In for local development and production:
+1. **Create/Select a Project**: Go to the [Google Cloud Console](https://console.cloud.google.com/) and create or select your project.
+2. **Configure OAuth Consent Screen**:
+   - Go to **APIs & Services > OAuth consent screen**.
+   - Choose **External** user type and click **Create**.
+   - Fill in the required application details (App name, User support email, Developer contact).
+   - In production, set the publishing status to **In production** (or publish your app) so all Google accounts can sign in without needing to be registered as manual test users.
+3. **Create OAuth Client ID Credentials**:
+   - Navigate to **APIs & Services > Credentials** and click **Create Credentials > OAuth client ID**.
+   - Select **Web application** as the application type.
+   - Under **Authorized JavaScript origins**, add:
+     - Local development: `http://localhost:3000`
+     - Production: `https://<your-frontend-domain>`
+   - (Optional) Under **Authorized redirect URIs**, add redirect endpoints if using redirect-based OAuth flows.
+4. **Configure Environment Variable**:
+   - Copy the generated **Client ID** and assign it to `GOOGLE_CLIENT_ID` in your backend `.env`.
+   - If `GOOGLE_CLIENT_ID` is omitted or empty, the backend endpoint `POST /api/v1/auth/google` will respond with `503 Service Unavailable` (`"Google sign-in is not configured"`).
+
+### 5. Database Setup & Migrations
 - **Fresh Database Setup**: For setting up a new/fresh database instance, use:
   ```bash
   npx prisma db push
@@ -169,13 +198,13 @@ SSLCOMMERZ_CANCEL_URL="https://road-res-q-backend.vercel.app/api/v1/payments/can
   npx prisma migrate deploy
   ```
 
-### 5. Seed Initial Database Data
+### 6. Seed Initial Database Data
 Execute the database seed script to generate initial users, vehicles, global spare parts catalog, and mechanic inventory:
 ```bash
 npx prisma db seed
 ```
 
-### 6. Start Development Server
+### 7. Start Development Server
 ```bash
 npm run dev
 ```
@@ -201,7 +230,7 @@ src/
 │   └── rbac.middleware.ts   # Role-Based Access Control middleware
 ├── modules/                 # Application Feature Modules
 │   ├── admin/               # User management, stats & audit logs
-│   ├── auth/                # Register, login, refresh token, logout
+│   ├── auth/                # Register, login, Google sign-in, refresh token, logout
 │   ├── invoices/            # Invoice details & calculation
 │   ├── mechanic-inventory/  # Per-mechanic spare parts inventory CRUD & restocking
 │   ├── mechanics/           # Availability, location updates & mechanic reviews
@@ -228,12 +257,12 @@ src/
 
 The complete REST API postman collection is available at [`RoadResQ.postman_collection.json`](./RoadResQ.postman_collection.json).
 
-### Endpoint Overview (Total 58 Registered Endpoints)
+### Endpoint Overview (Total 59 Registered Endpoints)
 
 | Module | Base Path | Total Endpoints | Description |
 | :--- | :--- | :---: | :--- |
 | **System & Health** | `/api/v1/health` | 2 | API welcome root and system health check status. |
-| **Authentication** | `/api/v1/auth` | 4 | User registration, login, refresh token rotation, and logout. |
+| **Authentication** | `/api/v1/auth` | 5 | User registration, login, Google sign-in, refresh token rotation, and logout. |
 | **Public Directory** | `/public` / `/api/v1/public` | 4 | Public (no auth) read-only directory: mechanics directory with search, filtering, and dynamic facets, full mechanic profiles with reviews & related mechanics, platform KPI stats, and recent customer reviews. |
 | **Users** | `/api/v1/users` | 2 | Authenticated user profile retrieval and update (`/me`). |
 | **Vehicles** | `/api/v1/vehicles` | 5 | Customer vehicle registration, listing, retrieval, update, and soft delete. |

@@ -154,6 +154,44 @@
       "response": []
     },
     {
+      "name": "Google Sign-in",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const responseData = pm.response.json();\r\n\r\nif (pm.response.code === 200 && responseData.data?.accessToken) {\r\n    pm.environment.set(\"accessToken\", responseData.data.accessToken);\r\n    pm.environment.set(\"refreshToken\", responseData.data.refreshToken);\r\n    \r\n    const userRole = responseData.data.user?.role;\r\n    if (userRole === \"CUSTOMER\") {\r\n        pm.environment.set(\"customerToken\", responseData.data.accessToken);\r\n    } else if (userRole === \"MECHANIC\") {\r\n        pm.environment.set(\"mechanicToken\", responseData.data.accessToken);\r\n    }\r\n}\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"idToken\": \"<google_id_token>\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/google",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "google"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "Refresh Token",
       "event": [
         {

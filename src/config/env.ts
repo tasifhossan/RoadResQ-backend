@@ -54,6 +54,7 @@ const envSchema = z.object({
     .string({ message: 'CLOUDINARY_API_SECRET is required' })
     .min(1, 'CLOUDINARY_API_SECRET is required'),
   DEMO_PASSWORD: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -76,6 +77,7 @@ export const env = {
   databaseUrl: envConfig.DATABASE_URL,
   frontendUrl: envConfig.FRONTEND_URL,
   demoPassword: envConfig.DEMO_PASSWORD,
+  googleClientId: envConfig.GOOGLE_CLIENT_ID,
   jwt: {
     accessSecret: envConfig.JWT_ACCESS_SECRET,
     accessExpiresIn: envConfig.JWT_ACCESS_EXPIRES_IN,
