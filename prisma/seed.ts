@@ -3,6 +3,60 @@ import { hashPassword } from '../src/utils/hashPassword.js';
 
 const prisma = new PrismaClient();
 
+function stringHash(str: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return Math.abs(hash);
+}
+
+const REVIEW_COMMENTS_5_STAR = [
+  'Rescued me near Mohakhali flyover within 20 minutes. Battery swapped and alternator checked properly.',
+  'Rapid response on Dhaka-Mymensingh highway. Fixed the punctured tire and balanced it on the spot.',
+  'Outstanding towing service during heavy rain in Dhanmondi. Handled my low sedan with great care.',
+  'Key got locked inside my car near Gulshan 2. He unlocked the driver door in minutes without a scratch.',
+  'Engine overheated near airport road. Quickly diagnosed the broken radiator hose and topped up coolant.',
+  'Emergency fuel delivery arrived fast near Banani. Primed the diesel pump cleanly and got me rolling.',
+  'Brake caliper seized on the highway. Expertly freed the pads and tested stopping power before leaving.',
+  'Late night jumpstart in Uttara sector 7. Extremely professional mechanic with heavy duty jumper cables.',
+  'Punctured front tire replaced swiftly on Mirpur road. Honest pricing and polite behavior throughout.',
+  'Fast recovery truck dispatched near Bijoy Sarani. Secured vehicle chassis firmly and towed safely.',
+  'Alternator failed near Tejgaon. Tested charging voltage thoroughly and got the car running in no time.',
+  'Starter motor clicked repeatedly in Motijheel. Technician tapped and cleaned terminals immediately.',
+  'Expert clutch cable adjustment on the highway. Smooth shifting restored without needing a flatbed.',
+  'Fuel pump fuse blew during peak traffic. Located the short circuit and replaced the fuse swiftly.',
+];
+
+const REVIEW_COMMENTS_4_STAR = [
+  'Good experience near Farmgate. Arrived in 30 minutes and jumpstarted the dead battery without delay.',
+  'Fixed the flat tire efficiently on Kuril flyover. Carried proper hydraulic jack and tightened wheel nuts.',
+  'Prompt emergency fuel delivery near Rampura. Slightly delayed by traffic but polite and got me moving.',
+  'Clean towing service to the workshop from Kanchpur bridge. Took good precautions with the front bumper.',
+  'Resolved the brake squeal roadside near Shyamoli. Realigned the brake pads and verified fluid levels.',
+  'Engine belt slipped near Kakrail. Re-tensioned the serpentine belt reliably. Good diagnostic equipment.',
+  'Unlocked car trunk near Bashundhara gate safely. Took about 25 minutes to arrive but solved the problem.',
+  'Replaced blown radiator cap after engine stalled near Agargaon. Very knowledgeable and polite technician.',
+  'Battery voltage check and terminal cleaning done well in Badda. Reliable roadside assistance service.',
+  'Quick spare tire swap on Airport road. Efficient mechanic though dispatch confirmation took some time.',
+  'Towing truck arrived within 40 minutes near Sayedabad. Smooth loading and safe transport to my garage.',
+];
+
+const REVIEW_COMMENTS_3_STAR = [
+  'Arrived late due to gridlock near Malibagh but got the battery jumpstarted successfully in the end.',
+  'Tire changed properly on Gabtoli highway, though the wait time was longer than originally estimated.',
+  'Fuel delivered as promised near Jatrabari. Service was acceptable but labor charge felt slightly high.',
+  'Tow truck took nearly an hour to reach Mirpur 10. Once there, the vehicle was loaded without incident.',
+  'Fixed brake pedal stiffness roadside. Work was fine but mechanic did not carry spare brake fluid.',
+  'Jumpstart got the engine turning again. Good service though communication during dispatch was slow.',
+  'Lockout resolved without window damage, but had to wait 50 minutes on the roadside in Moghbazar.',
+  'Engine coolant leak patched temporarily to reach home. Recommended follow-up workshop repair needed.',
+  'Spare wheel fitted roadside near Postogola. Job done correctly but mechanic arrived without an air pump.',
+];
+
+const RATING_PATTERN = [5, 4, 5, 4, 3, 5, 5, 4, 4, 5, 3, 5];
+
 async function main() {
   console.log('--- STARTING IDEMPOTENT DATABASE SEEDING ---');
 
@@ -120,8 +174,8 @@ async function main() {
       currentLat: 23.8103,
       currentLng: 90.4125,
       skills: ['Engine Repair', 'Brake Service', 'Tire Change', 'Battery Jumpstart', 'Engine', 'Brakes', 'Tire', 'Battery'],
-      rating: 5.0,
-      totalJobs: 2,
+      rating: 0,
+      totalJobs: 0,
       bio: 'Master technician with over 10 years of expertise diagnosing automotive failures across Dhaka. Dedicated to fast roadside recovery, preventative tuning, and trustworthy diagnostics.',
       avatarUrl: `https://api.dicebear.com/10.x/open-peeps/png?seed=${encodeURIComponent('Demo Mechanic')}`,
       city: 'Dhaka',
@@ -332,7 +386,7 @@ async function main() {
         yearsExperience: mData.yearsExperience,
         bio: mData.bio,
         avatarUrl: `https://api.dicebear.com/10.x/open-peeps/png?seed=${encodeURIComponent(mData.name)}`,
-        rating: 5.0,
+        rating: 0,
         totalJobs: 0,
       },
     });
@@ -689,20 +743,7 @@ async function main() {
 
   console.log(`✅ 5 Service Requests seeded across last 10 weeks (PENDING, ASSIGNED, IN_PROGRESS, 2x COMPLETED)`);
 
-  // 6b. Seed 3 to 5 COMPLETED and PAID requests each for the first 10 mechanics
-  const sampleComments = [
-    'Prompt arrival within 20 minutes, swapped the battery quickly and verified the alternator output thoroughly.',
-    'Expert brake service on the roadside, very polite mechanic and explained safety considerations clearly.',
-    'Emergency tire puncture replacement on the highway shoulder. Was back driving safely in under thirty minutes.',
-    'Comprehensive engine fault code scanning and resolved sudden cold start stalling without extra hassle.',
-    'Quick emergency fuel delivery on a rainy evening. Friendly roadside communication and fair service fee.',
-    'AC refrigerant recharged and air cooling restored to factory chill in forty minutes on site.',
-    'Transmission shifting feels remarkably smooth now. Highly skilled mechanic with great attention to detail.',
-    'Unlocked vehicle door without any scratch to the door frame. Very impressed by the specialized tools.',
-    'Replaced worn alternator belt efficiently on the roadside. Great customer care and smooth digital invoice.',
-    'Very thorough safety inspection after rapid towing dispatch. Courteous attitude and reliable workmanship.',
-  ];
-
+  // 6b. Seed 3 to 5 COMPLETED and PAID requests each for the first 10 mechanics with varied reviews
   const first10Mechanics = [
     { user: mechanicUser, profile: mechanicProfile },
     ...additionalMechanicUsers.slice(0, 9),
@@ -713,6 +754,7 @@ async function main() {
   for (let mIdx = 0; mIdx < first10Mechanics.length; mIdx++) {
     const { user: mUser } = first10Mechanics[mIdx];
     const numJobs = 3 + (mIdx % 3); // 3, 4, or 5 jobs per mechanic
+    const usedComments = new Set<string>();
 
     for (let j = 0; j < numJobs; j++) {
       const customerIdx = (mIdx * 3 + j) % seededCustomers.length;
@@ -721,10 +763,17 @@ async function main() {
       const invId = `demo-inv-mech-${mIdx + 1}-job-${j + 1}`;
       const payId = `demo-pay-mech-${mIdx + 1}-job-${j + 1}`;
       const revId = `demo-rev-mech-${mIdx + 1}-job-${j + 1}`;
+      const h = stringHash(revId);
 
       // Spread dates across the last ~12 weeks (between 3 and 84 days ago)
       const daysAgo = Math.floor(3 + ((mIdx * 8 + j * 5) % 80));
       const reqDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+
+      // Vary createdAt times within the day
+      const hour = 8 + (h % 12);
+      const minute = stringHash(revId + ':min') % 60;
+      const second = stringHash(revId + ':sec') % 60;
+      reqDate.setUTCHours(hour, minute, second, h % 1000);
 
       const partKey = sparePartKeys[(mIdx + j) % sparePartKeys.length];
       const part = catalogParts[partKey];
@@ -732,8 +781,30 @@ async function main() {
       const partsCost = new Prisma.Decimal(50 + (j * 20));
       const totalAmount = new Prisma.Decimal(laborCost.toNumber() + partsCost.toNumber());
 
-      const rating = 3 + ((mIdx + j) % 3); // 3, 4, or 5
-      const comment = sampleComments[(mIdx * 2 + j) % sampleComments.length];
+      // Deterministic rating skewed towards 4 and 5 with some 3s (average ~4.3)
+      const rating = RATING_PATTERN[(h + j) % RATING_PATTERN.length];
+
+      // Select pool based on rating
+      const pool =
+        rating === 5
+          ? REVIEW_COMMENTS_5_STAR
+          : rating === 4
+          ? REVIEW_COMMENTS_4_STAR
+          : REVIEW_COMMENTS_3_STAR;
+
+      // Ensure no two reviews of the same mechanic share text
+      let comment = '';
+      for (let offset = 0; offset < pool.length; offset++) {
+        const candidate = pool[(h + offset) % pool.length];
+        if (!usedComments.has(candidate)) {
+          comment = candidate;
+          break;
+        }
+      }
+      if (!comment) {
+        comment = pool[h % pool.length];
+      }
+      usedComments.add(comment);
 
       await prisma.serviceRequest.upsert({
         where: { id: reqId },
@@ -860,7 +931,9 @@ async function main() {
     });
 
     const finalRating =
-      reviewStats._avg.rating !== null ? Math.round(reviewStats._avg.rating * 10) / 10 : 5.0;
+      reviewStats._count.rating > 0 && reviewStats._avg.rating !== null
+        ? Math.round(reviewStats._avg.rating * 10) / 10
+        : 0;
 
     await prisma.mechanicProfile.update({
       where: { userId: mUser.id },
@@ -871,6 +944,43 @@ async function main() {
     });
   }
   console.log(`✅ Recalculated ratings and job counts for all ${allMechanicUsers.length} mechanics`);
+
+  // 7b. Legacy accounts cleanup (soft-delete accounts before 2026-10-16T00:00:00Z without active requests)
+  const legacyCutoff = new Date('2026-10-16T00:00:00Z');
+  const legacyUsers = await prisma.user.findMany({
+    where: {
+      NOT: {
+        email: { endsWith: '@roadresq-demo.com', mode: 'insensitive' },
+      },
+      createdAt: { lt: legacyCutoff },
+      deletedAt: null,
+    },
+    include: {
+      mechanicRequests: {
+        where: {
+          status: { in: [RequestStatus.ASSIGNED, RequestStatus.EN_ROUTE, RequestStatus.ARRIVED, RequestStatus.IN_PROGRESS] },
+        },
+      },
+    },
+  });
+
+  for (const lu of legacyUsers) {
+    if (lu.role === Role.MECHANIC && lu.mechanicRequests.length > 0) continue;
+    await prisma.user.update({
+      where: { id: lu.id },
+      data: { deletedAt: new Date() },
+    });
+    if (lu.role === Role.MECHANIC) {
+      await prisma.mechanicProfile.updateMany({
+        where: { userId: lu.id },
+        data: { availability: Availability.OFFLINE },
+      });
+    }
+    await prisma.refreshToken.deleteMany({ where: { userId: lu.id } });
+  }
+  if (legacyUsers.length > 0) {
+    console.log(`✅ Cleaned up ${legacyUsers.length} legacy account(s)`);
+  }
 
   // 8. Log Audit Entry for Database Seeding
   await prisma.auditLog.create({

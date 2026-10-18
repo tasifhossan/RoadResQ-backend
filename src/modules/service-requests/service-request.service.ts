@@ -87,7 +87,8 @@ export const findNearbyMechanics = async (
       ) AS distance
     FROM "MechanicProfile" mp
     JOIN "User" u ON mp."userId" = u."id"
-    WHERE mp."availability"::text = 'AVAILABLE'
+    WHERE u."deletedAt" IS NULL
+      AND mp."availability"::text = 'AVAILABLE'
       AND mp."currentLat" IS NOT NULL
       AND mp."currentLng" IS NOT NULL
       AND (

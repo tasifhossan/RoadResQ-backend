@@ -135,7 +135,8 @@ export const generalLimiter = rateLimit({
       path.includes('/payments/success') ||
       path.includes('/payments/fail') ||
       path.includes('/payments/cancel') ||
-      path.includes('/public')
+      path.startsWith('/public') ||
+      path.startsWith('/api/v1/public')
     );
   },
   handler: (_req: Request, res: Response) => {
