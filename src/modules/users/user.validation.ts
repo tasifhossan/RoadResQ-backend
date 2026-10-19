@@ -16,3 +16,7 @@ export const updateUserSchema = z
   .strict();
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+
+export const getMySummaryQuerySchema = z.object({}).strict();
+export type GetMySummaryQueryInput = z.infer<typeof getMySummaryQuerySchema>;
+

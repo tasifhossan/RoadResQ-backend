@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { updateUserSchema } from './user.validation.js';
-import { getMe, updateMe } from './user.service.js';
+import { updateUserSchema, getMySummaryQuerySchema } from './user.validation.js';
+import { getMe, updateMe, getMySummary } from './user.service.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { formatZodError } from '../../utils/formatZodError.js';
 
@@ -49,7 +49,44 @@ const updateMeHandler = async (req: Request, res: Response, next: NextFunction):
   }
 };
 
+const getMySummaryHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const parsed = getMySummaryQuerySchema.safeParse(req.query);
+
+    if (!parsed.success) {
+      sendResponse(res, {
+        statusCode: 400,
+        success: false,
+        message: 'Validation failed',
+        errors: formatZodError(parsed.error),
+      });
+      return;
+    }
+
+    const userId = req.user!.id;
+
+    res.setHeader('Cache-Control', 'private, no-store');
+
+    const summary = await getMySummary(userId);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Customer summary retrieved successfully',
+      data: summary,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const UserController = {
   getMe: getMeHandler,
   updateMe: updateMeHandler,
+  getMySummary: getMySummaryHandler,
 };
+

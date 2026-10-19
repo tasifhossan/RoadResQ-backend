@@ -257,14 +257,14 @@ src/
 
 The complete REST API postman collection is available at [`RoadResQ.postman_collection.json`](./RoadResQ.postman_collection.json).
 
-### Endpoint Overview (Total 60 Registered Endpoints)
+### Endpoint Overview (Total 61 Registered Endpoints)
 
 | Module | Base Path | Total Endpoints | Description |
 | :--- | :--- | :---: | :--- |
 | **System & Health** | `/api/v1/health` | 2 | API welcome root and system health check status. |
 | **Authentication** | `/api/v1/auth` | 5 | User registration, login, Google sign-in, refresh token rotation, and logout. |
 | **Public Directory** | `/public` / `/api/v1/public` | 4 | Public (no auth) read-only directory: mechanics directory with search, filtering, and dynamic facets, full mechanic profiles with reviews & related mechanics, platform KPI stats, and recent customer reviews. |
-| **Users** | `/api/v1/users` | 2 | Authenticated user profile retrieval and update (`/me`). |
+| **Users** | `/api/v1/users` | 3 | Authenticated user profile retrieval and update (`/me`), and customer summary metrics (`/me/summary`). |
 | **Vehicles** | `/api/v1/vehicles` | 5 | Customer vehicle registration, listing, retrieval, update, and soft delete. |
 | **Mechanics** | `/api/v1/mechanics` | 4 | Mechanic availability updates, location tracking, earnings summary (`/me/earnings`), and mechanic reviews list. |
 | **Mechanic Inventory** | `/api/v1/mechanics/me/inventory` | 5 | Mechanic inventory management (add catalog part, view stock, edit price, restock, delete). |

@@ -401,6 +401,35 @@
       "response": []
     },
     {
+      "name": "Get Customer Summary",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users/me/summary",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users",
+            "me",
+            "summary"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "Update Profile",
       "request": {
         "auth": {
